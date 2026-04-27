@@ -2,7 +2,7 @@
 {% block title %}Club | Academy{% endblock %}
 {% block content %}
 
-<section class="page-header"{% if section.image %} style="background-image: linear-gradient(135deg, rgba(19, 78, 74, 0.88), rgba(23, 37, 84, 0.86)), url('{{ url_for('static', filename='uploads/' ~ section.image) }}');"{% endif %}>
+<section class="page-header"{% if section.image or section.image_url %} style="background-image: linear-gradient(135deg, rgba(19, 78, 74, 0.88), rgba(23, 37, 84, 0.86)), url('{{ asset_url(section.image, section.image_url) }}');"{% endif %}>
     <div class="container">
         <span class="eyebrow">{{ section.subtitle }}</span>
         <h1>{{ section.title }}</h1>

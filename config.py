@@ -24,6 +24,12 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", str(BASE_DIR / "static" / "uploads"))
 MAX_CONTENT_LENGTH = 100 * 1024 * 1024
 
+# Cloudinary media storage.
+# Put CLOUDINARY_URL in .env like:
+# cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+# New uploads go to Cloudinary when this value exists.
+CLOUDINARY_URL = os.getenv("CLOUDINARY_URL", "")
+
 # Public social media links. Admin can also edit these from the dashboard.
 SOCIAL_WHATSAPP = os.getenv("SOCIAL_WHATSAPP", "")
 SOCIAL_FACEBOOK = os.getenv("SOCIAL_FACEBOOK", "")

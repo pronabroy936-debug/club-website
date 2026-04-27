@@ -2,7 +2,7 @@
 {% block title %}Vivekananda Sangathan | Home{% endblock %}
 {% block content %}
 
-<section class="hero-section"{% if section.image %} style="background-image: linear-gradient(115deg, rgba(15, 118, 110, 0.94), rgba(17, 24, 39, 0.92)), url('{{ url_for('static', filename='uploads/' ~ section.image) }}');"{% endif %}>
+<section class="hero-section"{% if section.image or section.image_url %} style="background-image: linear-gradient(115deg, rgba(15, 118, 110, 0.94), rgba(17, 24, 39, 0.92)), url('{{ asset_url(section.image, section.image_url) }}');"{% endif %}>
     <div class="container hero-grid">
         <div class="hero-copy">
             <span class="eyebrow">{{ section.subtitle }}</span>

@@ -72,3 +72,13 @@ venv\Scripts\python app.py
 ```
 
 The app will create collections automatically when you add members, upload gallery media, or submit contact messages.
+
+## Cloudinary Uploads
+
+Uploads use Cloudinary when `CLOUDINARY_URL` is set in `.env`:
+
+```env
+CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+```
+
+Gallery files and section images/videos are uploaded to Cloudinary. MongoDB stores the Cloudinary URL, public id, and the text details. If `CLOUDINARY_URL` is empty, the app falls back to `static/uploads` for local development.

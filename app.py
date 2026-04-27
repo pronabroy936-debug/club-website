@@ -8,10 +8,13 @@ from bson.errors import InvalidId
 from flask import Flask, flash, redirect, render_template, request, session, url_for
 from pymongo.errors import PyMongoError
 from werkzeug.utils import secure_filename
+import cloudinary
+import cloudinary.uploader
 
 from config import (
     ADMIN_PASSWORD,
     ADMIN_USERNAME,
+    CLOUDINARY_URL,
     MAX_CONTENT_LENGTH,
     SECRET_KEY,
     SOCIAL_FACEBOOK,
@@ -39,19 +42,54 @@ ALLOWED_EXTENSIONS = {
 
 Path(app.config["UPLOAD_FOLDER"]).mkdir(parents=True, exist_ok=True)
 
+if CLOUDINARY_URL:
+    cloudinary.config(cloudinary_url=CLOUDINARY_URL, secure=True)
+
 
 def get_media_type(filename):
     extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     return ALLOWED_EXTENSIONS.get(extension)
 
 
-def save_uploaded_file(file):
+def save_uploaded_file(file, media_type):
+    # Cloudinary is the main storage for uploaded images/videos.
+    # MongoDB stores the returned URL and public_id, not the file bytes.
+    if CLOUDINARY_URL:
+        result = cloudinary.uploader.upload(
+            file,
+            folder="vivekananda-sangathan",
+            resource_type="auto",
+        )
+        return {
+            "filename": result.get("public_id"),
+            "url": result.get("secure_url"),
+            "public_id": result.get("public_id"),
+            "storage": "cloudinary",
+            "resource_type": result.get("resource_type", media_type),
+        }
+
+    # Local fallback for development if CLOUDINARY_URL is missing.
     filename = secure_filename(file.filename)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
     stored_filename = f"{timestamp}-{filename}"
     path = Path(app.config["UPLOAD_FOLDER"]) / stored_filename
     file.save(path)
-    return stored_filename
+    return {
+        "filename": stored_filename,
+        "url": "",
+        "public_id": "",
+        "storage": "local",
+        "resource_type": media_type,
+    }
+
+
+def asset_url(filename="", uploaded_url=""):
+    # Templates use this for both Cloudinary and old local uploads.
+    if uploaded_url:
+        return uploaded_url
+    if filename:
+        return url_for("static", filename=f"uploads/{filename}")
+    return ""
 
 
 def login_required(view):
@@ -244,7 +282,7 @@ def get_social_links():
 
 @app.context_processor
 def inject_global_data():
-    return {"social_links": get_social_links()}
+    return {"social_links": get_social_links(), "asset_url": asset_url}
 
 
 # ---------------- HOME ----------------
@@ -294,10 +332,14 @@ def upload():
         flash("Only JPG, PNG, GIF, WEBP, MP4, MOV, and WEBM files are allowed.", "danger")
         return redirect(url_for("admin"))
 
-    filename = save_uploaded_file(file)
+    upload_result = save_uploaded_file(file, media_type)
 
     insert_document(db.gallery, {
-        "filename": filename,
+        "filename": upload_result["filename"],
+        "url": upload_result["url"],
+        "public_id": upload_result["public_id"],
+        "storage": upload_result["storage"],
+        "resource_type": upload_result["resource_type"],
         "media_type": media_type,
         "title": request.form.get("title", "").strip(),
         "location": request.form.get("location", "").strip(),
@@ -398,7 +440,11 @@ def update_section(slug):
         if get_media_type(section_image.filename) != "image":
             flash("Section image must be JPG, PNG, GIF, or WEBP.", "danger")
             return redirect(url_for("admin"))
-        document["image"] = save_uploaded_file(section_image)
+        upload_result = save_uploaded_file(section_image, "image")
+        document["image"] = upload_result["filename"]
+        document["image_url"] = upload_result["url"]
+        document["image_public_id"] = upload_result["public_id"]
+        document["image_storage"] = upload_result["storage"]
 
     try:
         db.sections.update_one({"slug": slug}, {"$set": document}, upsert=True)
@@ -532,11 +578,18 @@ def update_media(media_id):
 @app.route("/admin/gallery/<media_id>/delete", methods=["POST"])
 @login_required
 def delete_media(media_id):
-    filename = request.form.get("filename", "")
-    if filename:
-        media_path = Path(app.config["UPLOAD_FOLDER"]) / secure_filename(filename)
+    try:
+        media = db.gallery.find_one({"_id": ObjectId(media_id)}) or {}
+    except (PyMongoError, InvalidId):
+        media = {}
+
+    if media.get("storage") == "cloudinary" and media.get("public_id"):
+        cloudinary.uploader.destroy(media["public_id"], resource_type=media.get("resource_type", "image"))
+    elif media.get("filename"):
+        media_path = Path(app.config["UPLOAD_FOLDER"]) / secure_filename(media["filename"])
         if media_path.exists():
             media_path.unlink()
+
     delete_document(db.gallery, media_id, "Media deleted successfully.")
     return redirect(url_for("admin"))
 
