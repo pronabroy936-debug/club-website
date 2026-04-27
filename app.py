@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from functools import wraps
 from pathlib import Path
+import os
 
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -540,4 +541,6 @@ def delete_media(media_id):
     return redirect(url_for("admin"))
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
