@@ -483,6 +483,66 @@ body {
     gap: 16px;
 }
 
+.message-list {
+    display: grid;
+    gap: 14px;
+}
+
+.message-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.message-card.is-read {
+    border-left-color: var(--line);
+    opacity: 0.76;
+}
+
+.message-head {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.message-head span {
+    padding: 3px 8px;
+    color: var(--muted);
+    background: var(--paper);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.message-head .unread {
+    color: #ffffff;
+    background: var(--brand);
+}
+
+.message-card a {
+    color: var(--brand);
+    text-decoration: none;
+}
+
+.message-card p {
+    margin: 10px 0 0;
+    color: var(--muted);
+    white-space: pre-wrap;
+}
+
+.message-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
 .section-edit-row {
     display: grid;
     grid-template-columns: 112px minmax(0, 1fr) auto;
@@ -667,6 +727,7 @@ body {
 
     .admin-header,
     .admin-edit-row,
+    .message-card,
     .section-edit-row {
         grid-template-columns: 1fr;
         display: grid;

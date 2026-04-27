@@ -418,6 +418,7 @@ def admin_logout():
 def admin():
     members = find_documents(db.members)
     notifications = find_documents(db.notifications)
+    queries = find_documents(db.queries)
     media = find_documents(db.gallery)
     programs = find_documents(db.programs)
     sections = get_all_sections()
@@ -425,11 +426,29 @@ def admin():
         "admin.html",
         members=members,
         notifications=notifications,
+        queries=queries,
         media=media,
         programs=programs,
         sections=sections,
         social_links=get_social_links(),
     )
+
+
+@app.route("/admin/queries/<query_id>/read", methods=["POST"])
+@login_required
+def mark_query_read(query_id):
+    update_document(db.queries, query_id, {
+        "status": "read",
+        "read_at": datetime.now(timezone.utc),
+    }, "Message marked as read.")
+    return redirect(url_for("admin"))
+
+
+@app.route("/admin/queries/<query_id>/delete", methods=["POST"])
+@login_required
+def delete_query(query_id):
+    delete_document(db.queries, query_id, "Message deleted successfully.")
+    return redirect(url_for("admin"))
 
 
 @app.route("/admin/sections/<slug>", methods=["POST"])

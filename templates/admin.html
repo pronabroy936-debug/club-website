@@ -18,6 +18,45 @@
 <section class="container section-space admin-stack">
     <div class="admin-section">
         <div class="section-heading">
+            <span class="eyebrow">Inbox</span>
+            <h2>Contact Messages</h2>
+        </div>
+        <div class="admin-list message-list">
+            {% for query in queries %}
+                <article class="message-card {% if query.status == 'read' %}is-read{% endif %}">
+                    <div>
+                        <div class="message-head">
+                            <strong>{{ query.name }}</strong>
+                            {% if query.status == 'read' %}
+                                <span>Read</span>
+                            {% else %}
+                                <span class="unread">New</span>
+                            {% endif %}
+                        </div>
+                        {% if query.email %}
+                            <a href="mailto:{{ query.email }}">{{ query.email }}</a>
+                        {% endif %}
+                        <p>{{ query.message }}</p>
+                    </div>
+                    <div class="message-actions">
+                        {% if query.status != 'read' %}
+                            <form action="{{ url_for('mark_query_read', query_id=query._id) }}" method="post">
+                                <button class="btn btn-sm btn-dark">Mark Read</button>
+                            </form>
+                        {% endif %}
+                        <form action="{{ url_for('delete_query', query_id=query._id) }}" method="post">
+                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </div>
+                </article>
+            {% else %}
+                <div class="empty-state">No contact messages yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="admin-section">
+        <div class="section-heading">
             <span class="eyebrow">Website sections</span>
             <h2>Page Images and Text</h2>
         </div>
