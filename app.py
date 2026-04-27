@@ -5,7 +5,7 @@ import os
 
 from bson import ObjectId
 from bson.errors import InvalidId
-from flask import Flask, flash, redirect, render_template, request, session, url_for
+from flask import Flask, flash, make_response, redirect, render_template, request, send_from_directory, session, url_for
 from pymongo.errors import PyMongoError
 from werkzeug.utils import secure_filename
 import cloudinary
@@ -283,6 +283,19 @@ def get_social_links():
 @app.context_processor
 def inject_global_data():
     return {"social_links": get_social_links(), "asset_url": asset_url}
+
+
+@app.route("/manifest.webmanifest")
+def manifest():
+    return send_from_directory("static", "manifest.webmanifest", mimetype="application/manifest+json")
+
+
+@app.route("/service-worker.js")
+def service_worker():
+    response = make_response(send_from_directory("static", "service-worker.js", mimetype="application/javascript"))
+    response.headers["Cache-Control"] = "no-cache"
+    response.headers["Service-Worker-Allowed"] = "/"
+    return response
 
 
 # ---------------- HOME ----------------

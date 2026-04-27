@@ -88,10 +88,16 @@ Gallery files and section images/videos are uploaded to Cloudinary. MongoDB stor
 The site includes a basic Progressive Web App setup:
 
 ```text
+manifest.webmanifest is served at /manifest.webmanifest
+service-worker.js is served at /service-worker.js
 static/manifest.webmanifest
 static/service-worker.js
+static/icons/icon-192.png
+static/icons/icon-512.png
 static/icons/icon-192.svg
 static/icons/icon-512.svg
 ```
 
 Visitors can install the website from supported browsers. The service worker caches public pages and static assets, but skips admin routes and form submissions.
+
+For mobile installation, deploy the site on HTTPS. Android Chrome can install from HTTPS sites, while iPhone Safari usually uses Share -> Add to Home Screen instead of showing a normal install button.

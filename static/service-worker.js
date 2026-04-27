@@ -1,4 +1,4 @@
-const CACHE_NAME = "vivekananda-sangathan-v1";
+const CACHE_NAME = "vivekananda-sangathan-v2";
 
 const STATIC_ASSETS = [
   "/",
@@ -10,7 +10,11 @@ const STATIC_ASSETS = [
   "/members",
   "/contact",
   "/static/css/style.css",
+  "/manifest.webmanifest",
+  "/service-worker.js",
   "/static/manifest.webmanifest",
+  "/static/icons/icon-192.png",
+  "/static/icons/icon-512.png",
   "/static/icons/icon-192.svg",
   "/static/icons/icon-512.svg"
 ];
