@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Club | Contact{% endblock %}
+{% block content %}
+
+<section class="page-header"{% if section.image %} style="background-image: linear-gradient(135deg, rgba(19, 78, 74, 0.88), rgba(23, 37, 84, 0.86)), url('{{ url_for('static', filename='uploads/' ~ section.image) }}');"{% endif %}>
+    <div class="container">
+        <span class="eyebrow">{{ section.subtitle }}</span>
+        <h1>{{ section.title }}</h1>
+        <p>{{ section.body }}</p>
+    </div>
+</section>
+
+<section class="container section-space contact-layout">
+    <div class="contact-card">
+        <span class="eyebrow">Office</span>
+        <h2>{{ profile.name }}</h2>
+        <p>{{ profile.address }}</p>
+        <p><strong>Phone:</strong> {{ profile.phone }}</p>
+        <p><strong>Email:</strong> {{ profile.email }}</p>
+    </div>
+
+    <form method="post" class="form-panel">
+        <label class="form-label" for="name">Name</label>
+        <input id="name" name="name" class="form-control" placeholder="Your name" required>
+
+        <label class="form-label" for="email">Email or phone</label>
+        <input id="email" name="email" class="form-control" placeholder="Where we can reach you">
+
+        <label class="form-label" for="message">Message</label>
+        <textarea id="message" name="message" class="form-control" rows="5" placeholder="Tell us what you need" required></textarea>
+
+        <button class="btn btn-dark">Send Message</button>
+    </form>
+</section>
+
+{% endblock %}

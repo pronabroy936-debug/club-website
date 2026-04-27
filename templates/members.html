@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Club | Members{% endblock %}
+{% block content %}
+
+<section class="page-header"{% if section.image %} style="background-image: linear-gradient(135deg, rgba(19, 78, 74, 0.88), rgba(23, 37, 84, 0.86)), url('{{ url_for('static', filename='uploads/' ~ section.image) }}');"{% endif %}>
+    <div class="container">
+        <span class="eyebrow">{{ section.subtitle }}</span>
+        <h1>{{ section.title }}</h1>
+        <p>{{ section.body }}</p>
+    </div>
+</section>
+
+<section class="container section-space member-grid">
+    {% for m in members %}
+        <article class="member-card">
+            <div class="avatar">{{ m.name[:1] }}</div>
+            <div>
+                <h2>{{ m.name }}</h2>
+                <p>{{ m.position }}</p>
+            </div>
+        </article>
+    {% else %}
+        <div class="empty-state">No members added yet.</div>
+    {% endfor %}
+</section>
+
+{% endblock %}

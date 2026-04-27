@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block title %}Club | Admin{% endblock %}
+{% block content %}
+
+<section class="page-header">
+    <div class="container admin-header">
+        <div>
+            <span class="eyebrow">Control room</span>
+            <h1>Admin Panel</h1>
+            <p>Manage members, notifications, academy programs, and gallery uploads from here.</p>
+        </div>
+        <form action="{{ url_for('admin_logout') }}" method="post">
+            <button class="btn btn-outline-light">Logout</button>
+        </form>
+    </div>
+</section>
+
+<section class="container section-space admin-stack">
+    <div class="admin-section">
+        <div class="section-heading">
+            <span class="eyebrow">Website sections</span>
+            <h2>Page Images and Text</h2>
+        </div>
+        <div class="admin-list section-manager">
+            {% for item in sections %}
+                <form action="{{ url_for('update_section', slug=item.slug) }}" method="post" enctype="multipart/form-data" class="section-edit-row">
+                    <div class="section-thumb">
+                        {% if item.image %}
+                            <img src="{{ url_for('static', filename='uploads/' ~ item.image) }}" alt="{{ item.label }} section image">
+                        {% else %}
+                            <span>{{ item.label[:1] }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="section-fields">
+                        <strong>{{ item.label }}</strong>
+                        <input name="subtitle" class="form-control" value="{{ item.subtitle }}" placeholder="Small heading" required>
+                        <input name="title" class="form-control" value="{{ item.title }}" placeholder="Main title" required>
+                        <textarea name="body" class="form-control" rows="2" placeholder="Section text" required>{{ item.body }}</textarea>
+                        <input name="image" type="file" class="form-control" accept="image/*">
+                    </div>
+                    <button class="btn btn-sm btn-dark">Save</button>
+                </form>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="admin-section">
+        <div class="section-heading">
+            <span class="eyebrow">Social media</span>
+            <h2>Visitor Redirect Links</h2>
+        </div>
+        <form action="{{ url_for('update_social_links') }}" method="post" class="form-panel social-form-grid">
+            <div>
+                <label class="form-label" for="whatsapp">WhatsApp URL</label>
+                <input id="whatsapp" name="whatsapp" class="form-control" value="{{ social_links.whatsapp }}" placeholder="https://wa.me/91...">
+            </div>
+            <div>
+                <label class="form-label" for="facebook">Facebook URL</label>
+                <input id="facebook" name="facebook" class="form-control" value="{{ social_links.facebook }}" placeholder="https://facebook.com/...">
+            </div>
+            <div>
+                <label class="form-label" for="youtube">YouTube URL</label>
+                <input id="youtube" name="youtube" class="form-control" value="{{ social_links.youtube }}" placeholder="https://youtube.com/@...">
+            </div>
+            <button class="btn btn-dark">Save Links</button>
+        </form>
+    </div>
+
+    <div class="admin-section">
+        <div class="section-heading">
+            <span class="eyebrow">Gallery</span>
+            <h2>Upload Media</h2>
+        </div>
+        <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" class="form-panel admin-form-grid">
+            <div>
+                <label class="form-label" for="file">Image or video</label>
+                <input id="file" type="file" name="file" class="form-control" accept="image/*,video/*" required>
+            </div>
+            <div>
+                <label class="form-label" for="media-title">Title</label>
+                <input id="media-title" name="title" class="form-control" placeholder="Practice session">
+            </div>
+            <div>
+                <label class="form-label" for="location">Location</label>
+                <input id="location" name="location" class="form-control" placeholder="Ground, hall, tournament">
+            </div>
+            <div>
+                <label class="form-label" for="category">Category</label>
+                <input id="category" name="category" class="form-control" placeholder="Cricket, football, event">
+            </div>
+            <button class="btn btn-dark">Upload Media</button>
+        </form>
+
+        <div class="admin-list mt-3">
+            <h3>Uploaded media</h3>
+            {% for item in media %}
+                <div class="admin-edit-row">
+                    <form action="{{ url_for('update_media', media_id=item._id) }}" method="post" class="inline-edit">
+                        <input name="title" class="form-control" value="{{ item.title or '' }}" placeholder="Title">
+                        <input name="location" class="form-control" value="{{ item.location or '' }}" placeholder="Location">
+                        <input name="category" class="form-control" value="{{ item.category or '' }}" placeholder="Category">
+                        <button class="btn btn-sm btn-dark">Save</button>
+                    </form>
+                    <form action="{{ url_for('delete_media', media_id=item._id) }}" method="post">
+                        <input type="hidden" name="filename" value="{{ item.filename }}">
+                        <button class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </div>
+            {% else %}
+                <div class="empty-state">No media uploaded yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="admin-section two-column">
+        <div>
+            <div class="section-heading">
+                <span class="eyebrow">Members</span>
+                <h2>Member List</h2>
+            </div>
+            <form action="{{ url_for('add_member') }}" method="post" class="form-panel">
+                <label class="form-label" for="name">Member name</label>
+                <input id="name" name="name" placeholder="Member Name" class="form-control" required>
+
+                <label class="form-label" for="position">Position</label>
+                <input id="position" name="position" placeholder="Coach, Captain, Secretary" class="form-control" required>
+
+                <button class="btn btn-dark">Add Member</button>
+            </form>
+
+            <div class="admin-list mt-3">
+                {% for m in members %}
+                    <div class="admin-edit-row">
+                        <form action="{{ url_for('update_member', member_id=m._id) }}" method="post" class="inline-edit">
+                            <input name="name" class="form-control" value="{{ m.name }}" required>
+                            <input name="position" class="form-control" value="{{ m.position }}" required>
+                            <button class="btn btn-sm btn-dark">Save</button>
+                        </form>
+                        <form action="{{ url_for('delete_member', member_id=m._id) }}" method="post">
+                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </div>
+                {% else %}
+                    <div class="empty-state">No members added yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div>
+            <div class="section-heading">
+                <span class="eyebrow">Notice board</span>
+                <h2>Notifications</h2>
+            </div>
+            <form action="{{ url_for('add_notification') }}" method="post" class="form-panel">
+                <label class="form-label" for="note-title">Title</label>
+                <input id="note-title" name="title" class="form-control" placeholder="New admission open" required>
+
+                <label class="form-label" for="note-message">Message</label>
+                <textarea id="note-message" name="message" class="form-control" rows="4" placeholder="Write notification details" required></textarea>
+
+                <button class="btn btn-dark">Publish Notification</button>
+            </form>
+
+            <div class="admin-list mt-3">
+                {% for note in notifications %}
+                    <div class="admin-edit-row">
+                        <form action="{{ url_for('update_notification', notification_id=note._id) }}" method="post" class="inline-edit inline-edit-stack">
+                            <input name="title" class="form-control" value="{{ note.title }}" required>
+                            <textarea name="message" class="form-control" rows="2" required>{{ note.message }}</textarea>
+                            <button class="btn btn-sm btn-dark">Save</button>
+                        </form>
+                        <form action="{{ url_for('delete_notification', notification_id=note._id) }}" method="post">
+                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </div>
+                {% else %}
+                    <div class="empty-state">No notifications published yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-section">
+        <div class="section-heading">
+            <span class="eyebrow">Academy</span>
+            <h2>Programs</h2>
+        </div>
+        <form action="{{ url_for('add_program') }}" method="post" class="form-panel admin-form-grid">
+            <div>
+                <label class="form-label" for="program-title">Program name</label>
+                <input id="program-title" name="title" class="form-control" placeholder="Cricket" required>
+            </div>
+            <div>
+                <label class="form-label" for="program-description">Description</label>
+                <input id="program-description" name="description" class="form-control" placeholder="Training details" required>
+            </div>
+            <button class="btn btn-dark">Add Program</button>
+        </form>
+
+        <div class="admin-list mt-3">
+            {% for program in programs %}
+                <div class="admin-edit-row">
+                    {% if program._id %}
+                        <form action="{{ url_for('update_program', program_id=program._id) }}" method="post" class="inline-edit">
+                            <input name="title" class="form-control" value="{{ program.title }}" required>
+                            <input name="description" class="form-control" value="{{ program.description }}" required>
+                            <button class="btn btn-sm btn-dark">Save</button>
+                        </form>
+                        <form action="{{ url_for('delete_program', program_id=program._id) }}" method="post">
+                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    {% else %}
+                        <div class="admin-row">
+                            <strong>{{ program.title }}</strong>
+                            <span>{{ program.description }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="empty-state">No programs added yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Vivekananda Sangathan | Activities{% endblock %}
+{% block content %}
+
+<section class="page-header"{% if section.image %} style="background-image: linear-gradient(135deg, rgba(19, 78, 74, 0.88), rgba(23, 37, 84, 0.86)), url('{{ url_for('static', filename='uploads/' ~ section.image) }}');"{% endif %}>
+    <div class="container">
+        <span class="eyebrow">{{ section.subtitle }}</span>
+        <h1>{{ section.title }}</h1>
+        <p>{{ section.body }}</p>
+    </div>
+</section>
+
+<section class="container section-space activity-grid">
+    {% for activity in activities %}
+        <article>
+            <span>0{{ loop.index }}</span>
+            <h2>{{ activity.title }}</h2>
+            <p>{{ activity.description }}</p>
+        </article>
+    {% endfor %}
+</section>
+
+{% endblock %}

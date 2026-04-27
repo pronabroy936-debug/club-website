@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Vivekananda Sangathan | Home{% endblock %}
+{% block content %}
+
+<section class="hero-section"{% if section.image %} style="background-image: linear-gradient(115deg, rgba(15, 118, 110, 0.94), rgba(17, 24, 39, 0.92)), url('{{ url_for('static', filename='uploads/' ~ section.image) }}');"{% endif %}>
+    <div class="container hero-grid">
+        <div class="hero-copy">
+            <span class="eyebrow">{{ section.subtitle }}</span>
+            <h1>{{ section.title }}</h1>
+            <p>{{ section.body }}</p>
+            <div class="hero-actions">
+                <a href="{{ url_for('academy') }}" class="btn btn-light">Explore Academy</a>
+                <a href="{{ url_for('admission') }}" class="btn btn-outline-light">Admission & Membership</a>
+            </div>
+        </div>
+        <div class="hero-panel">
+            <div>
+                <span class="stat-number">1958</span>
+                <span class="stat-label">community legacy</span>
+            </div>
+            <div>
+                <span class="stat-number">6+</span>
+                <span class="stat-label">service areas</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="about-band">
+    <div class="container about-grid">
+        <div>
+            <span class="eyebrow">Welcome</span>
+            <h2>{{ profile.name }}</h2>
+        </div>
+        <p>{{ profile.name }} presents the work of the organization as a social, educational, cultural, and sports institution. Visitors can understand the mission, see activities, check notifications, view media, and contact the team.</p>
+    </div>
+</section>
+
+{% if notifications %}
+<section class="notification-band">
+    <div class="container">
+        <div class="section-heading">
+            <span class="eyebrow">Updates</span>
+            <h2>Latest Notifications</h2>
+        </div>
+        <div class="notification-grid">
+            {% for note in notifications %}
+                <article class="notice-card">
+                    <h3>{{ note.title }}</h3>
+                    <p>{{ note.message }}</p>
+                </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<section class="content-band">
+    <div class="container feature-grid">
+        {% for activity in activities %}
+            <article>
+                <span>0{{ loop.index }}</span>
+                <h2>{{ activity.title }}</h2>
+                <p>{{ activity.description }}</p>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="cta-band">
+    <div class="container cta-grid">
+        <div>
+            <span class="eyebrow">Get involved</span>
+            <h2>Admission, membership, scholarship, and community participation.</h2>
+        </div>
+        <div class="cta-actions">
+            <a href="{{ url_for('admission') }}" class="btn btn-light">View Details</a>
+            <a href="{{ url_for('contact') }}" class="btn btn-outline-light">Contact Us</a>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

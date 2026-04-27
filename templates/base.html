@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Club{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark site-nav">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('home') }}">Vivekananda Sangathan</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNavbar" aria-controls="siteNavbar" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="siteNavbar">
+            <div class="navbar-nav ms-auto main-menu">
+                <a href="{{ url_for('gallery') }}" class="nav-link">Gallery</a>
+                <a href="{{ url_for('activities') }}" class="nav-link">Activities</a>
+                <a href="{{ url_for('utsav') }}" class="nav-link">Utsav</a>
+                <a href="{{ url_for('academy') }}" class="nav-link">Academy</a>
+                <a href="{{ url_for('admission') }}" class="nav-link">Admission</a>
+                <a href="{{ url_for('members') }}" class="nav-link">Members</a>
+                <a href="{{ url_for('contact') }}" class="nav-link">Contact</a>
+                {% if session.get("admin_logged_in") %}
+                    <a href="{{ url_for('admin') }}" class="nav-link nav-link-admin">Admin</a>
+                {% else %}
+                    <a href="{{ url_for('admin_login') }}" class="nav-link nav-link-admin">Admin Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
+
+<main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container pt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} mb-2">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+    <div class="container footer-inner">
+        <div>
+            <span>Vivekananda Sangathan</span>
+            <small>Education, sports, service, and community development.</small>
+        </div>
+        <div class="social-links">
+            {% if social_links.whatsapp %}
+                <a href="{{ social_links.whatsapp }}" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="bi bi-whatsapp"></i></a>
+            {% endif %}
+            {% if social_links.facebook %}
+                <a href="{{ social_links.facebook }}" target="_blank" rel="noopener" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+            {% endif %}
+            {% if social_links.youtube %}
+                <a href="{{ social_links.youtube }}" target="_blank" rel="noopener" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+            {% endif %}
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Vivekananda Sangathan | Admission{% endblock %}
+{% block content %}
+
+<section class="page-header"{% if section.image %} style="background-image: linear-gradient(135deg, rgba(19, 78, 74, 0.88), rgba(23, 37, 84, 0.86)), url('{{ url_for('static', filename='uploads/' ~ section.image) }}');"{% endif %}>
+    <div class="container">
+        <span class="eyebrow">{{ section.subtitle }}</span>
+        <h1>{{ section.title }}</h1>
+        <p>{{ section.body }}</p>
+    </div>
+</section>
+
+<section class="container section-space admission-grid">
+    <article>
+        <h2>Sports Academy</h2>
+        <p>Training support for cricket, football, karate, badminton, athletics, yoga, and other activities.</p>
+    </article>
+    <article>
+        <h2>Membership</h2>
+        <p>Become part of the organization and support education, sports, cultural, and social service work.</p>
+    </article>
+    <article>
+        <h2>Scholarship Support</h2>
+        <p>Use the contact form to ask about scholarship or support opportunities for eligible students.</p>
+    </article>
+    <article class="contact-card">
+        <h2>Office Contact</h2>
+        <p>{{ profile.address }}</p>
+        <p><strong>Phone:</strong> {{ profile.phone }}</p>
+        <p><strong>Email:</strong> {{ profile.email }}</p>
+        <a href="{{ url_for('contact') }}" class="btn btn-dark">Contact Now</a>
+    </article>
+</section>
+
+{% endblock %}
