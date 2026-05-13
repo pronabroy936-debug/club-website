@@ -140,6 +140,15 @@ def delete_document(collection, document_id, success_message):
         flash("Could not delete this item.", "danger")
 
 
+def delete_saved_media(document, filename_key="filename", public_id_key="public_id", storage_key="storage", resource_type_key="resource_type"):
+    if document.get(storage_key) == "cloudinary" and document.get(public_id_key):
+        cloudinary.uploader.destroy(document[public_id_key], resource_type=document.get(resource_type_key, "image"))
+    elif document.get(filename_key):
+        media_path = Path(app.config["UPLOAD_FOLDER"]) / secure_filename(document[filename_key])
+        if media_path.exists():
+            media_path.unlink()
+
+
 def default_programs():
     return [
         {"title": "Cricket", "description": "Batting, bowling, fielding, and match awareness sessions."},
@@ -518,6 +527,76 @@ def update_section(slug):
     return redirect(url_for("admin"))
 
 
+@app.route("/admin/sections/<slug>/image/delete", methods=["POST"])
+@login_required
+def delete_section_image(slug):
+    if slug not in default_sections():
+        flash("Unknown section.", "danger")
+        return redirect(url_for("admin"))
+
+    try:
+        section = db.sections.find_one({"slug": slug}) or {}
+        delete_saved_media(
+            section,
+            filename_key="image",
+            public_id_key="image_public_id",
+            storage_key="image_storage",
+            resource_type_key="image_resource_type",
+        )
+        db.sections.update_one(
+            {"slug": slug},
+            {
+                "$unset": {
+                    "image": "",
+                    "image_url": "",
+                    "image_public_id": "",
+                    "image_storage": "",
+                    "image_resource_type": "",
+                }
+            },
+        )
+        flash("Section image deleted successfully.", "success")
+    except PyMongoError:
+        flash("Could not delete section image. Check MongoDB connection.", "danger")
+
+    return redirect(url_for("admin"))
+
+
+@app.route("/admin/sections/<slug>/about-image/delete", methods=["POST"])
+@login_required
+def delete_section_about_image(slug):
+    if slug != "home":
+        flash("Unknown section image.", "danger")
+        return redirect(url_for("admin"))
+
+    try:
+        section = db.sections.find_one({"slug": slug}) or {}
+        delete_saved_media(
+            section,
+            filename_key="about_image",
+            public_id_key="about_image_public_id",
+            storage_key="about_image_storage",
+            resource_type_key="about_image_resource_type",
+        )
+        db.sections.update_one(
+            {"slug": slug},
+            {
+                "$unset": {
+                    "about_image": "",
+                    "about_image_url": "",
+                    "about_image_public_id": "",
+                    "about_image_storage": "",
+                    "about_image_resource_type": "",
+                }
+            },
+        )
+        flash("Welcome section image deleted successfully.", "success")
+    except PyMongoError:
+        flash("Could not delete welcome section image. Check MongoDB connection.", "danger")
+
+    return redirect(url_for("admin"))
+
+
 @app.route("/admin/social-links", methods=["POST"])
 @login_required
 def update_social_links():
@@ -648,12 +727,7 @@ def delete_media(media_id):
     except (PyMongoError, InvalidId):
         media = {}
 
-    if media.get("storage") == "cloudinary" and media.get("public_id"):
-        cloudinary.uploader.destroy(media["public_id"], resource_type=media.get("resource_type", "image"))
-    elif media.get("filename"):
-        media_path = Path(app.config["UPLOAD_FOLDER"]) / secure_filename(media["filename"])
-        if media_path.exists():
-            media_path.unlink()
+    delete_saved_media(media)
 
     delete_document(db.gallery, media_id, "Media deleted successfully.")
     return redirect(url_for("admin"))

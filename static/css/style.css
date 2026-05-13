@@ -601,6 +601,10 @@ body {
     font-size: 1rem;
 }
 
+.section-image-delete {
+    justify-self: start;
+}
+
 .admin-list h2,
 .admin-list h3 {
     margin: 0 0 16px;

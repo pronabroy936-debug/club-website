@@ -76,13 +76,25 @@
                         <input name="title" class="form-control" value="{{ item.title }}" placeholder="Main title" required>
                         <textarea name="body" class="form-control" rows="2" placeholder="Section text" required>{{ item.body }}</textarea>
                         <input name="image" type="file" class="form-control" accept="image/*">
+                        {% if item.image or item.image_url %}
+                            <button class="btn btn-sm btn-outline-danger section-image-delete" type="submit" form="delete-section-image-{{ item.slug }}">Delete section image</button>
+                        {% endif %}
                         {% if item.slug == "home" %}
                             <small class="text-muted">Welcome section image</small>
                             <input name="about_image" type="file" class="form-control" accept="image/*">
+                            {% if item.about_image or item.about_image_url %}
+                                <button class="btn btn-sm btn-outline-danger section-image-delete" type="submit" form="delete-about-image-{{ item.slug }}">Delete welcome section image</button>
+                            {% endif %}
                         {% endif %}
                     </div>
                     <button class="btn btn-sm btn-dark">Save</button>
                 </form>
+                {% if item.image or item.image_url %}
+                    <form id="delete-section-image-{{ item.slug }}" action="{{ url_for('delete_section_image', slug=item.slug) }}" method="post"></form>
+                {% endif %}
+                {% if item.slug == "home" and (item.about_image or item.about_image_url) %}
+                    <form id="delete-about-image-{{ item.slug }}" action="{{ url_for('delete_section_about_image', slug=item.slug) }}" method="post"></form>
+                {% endif %}
             {% endfor %}
         </div>
     </div>
