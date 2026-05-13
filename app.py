@@ -266,6 +266,17 @@ def utsav_events():
     ]
 
 
+def member_sections():
+    return {
+        "administrative": "Administrative Section",
+        "general": "General Member Section",
+    }
+
+
+def normalize_member_section(value):
+    return value if value in member_sections() else "general"
+
+
 def get_social_links():
     links = {
         "whatsapp": SOCIAL_WHATSAPP,
@@ -365,7 +376,15 @@ def upload():
 @app.route("/members")
 def members():
     data = find_documents(db.members)
-    return render_template("members.html", members=data, section=get_section("members"))
+    administrative_members = [m for m in data if normalize_member_section(m.get("member_section")) == "administrative"]
+    general_members = [m for m in data if normalize_member_section(m.get("member_section")) == "general"]
+    return render_template(
+        "members.html",
+        members=data,
+        administrative_members=administrative_members,
+        general_members=general_members,
+        section=get_section("members"),
+    )
 
 # ---------------- ACADEMY ----------------
 @app.route("/academy")
@@ -430,6 +449,7 @@ def admin():
         media=media,
         programs=programs,
         sections=sections,
+        member_sections=member_sections(),
         social_links=get_social_links(),
     )
 
@@ -514,6 +534,7 @@ def add_member():
     insert_document(db.members, {
         "name": request.form["name"].strip(),
         "position": request.form["position"].strip(),
+        "member_section": normalize_member_section(request.form.get("member_section")),
         "created_at": datetime.now(timezone.utc),
     }, "Member added successfully.")
     return redirect(url_for("admin"))
@@ -525,6 +546,7 @@ def update_member(member_id):
     update_document(db.members, member_id, {
         "name": request.form["name"].strip(),
         "position": request.form["position"].strip(),
+        "member_section": normalize_member_section(request.form.get("member_section")),
         "updated_at": datetime.now(timezone.utc),
     }, "Member updated successfully.")
     return redirect(url_for("admin"))

@@ -163,6 +163,13 @@
                 <label class="form-label" for="position">Position</label>
                 <input id="position" name="position" placeholder="Coach, Captain, Secretary" class="form-control" required>
 
+                <label class="form-label" for="member-section">Member section</label>
+                <select id="member-section" name="member_section" class="form-control" required>
+                    {% for value, label in member_sections.items() %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+
                 <button class="btn btn-dark">Add Member</button>
             </form>
 
@@ -172,6 +179,11 @@
                         <form action="{{ url_for('update_member', member_id=m._id) }}" method="post" class="inline-edit">
                             <input name="name" class="form-control" value="{{ m.name }}" required>
                             <input name="position" class="form-control" value="{{ m.position }}" required>
+                            <select name="member_section" class="form-control" required>
+                                {% for value, label in member_sections.items() %}
+                                    <option value="{{ value }}" {% if (m.member_section or 'general') == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
                             <button class="btn btn-sm btn-dark">Save</button>
                         </form>
                         <form action="{{ url_for('delete_member', member_id=m._id) }}" method="post">

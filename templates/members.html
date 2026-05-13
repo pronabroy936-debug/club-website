@@ -10,18 +10,50 @@
     </div>
 </section>
 
-<section class="container section-space member-grid">
-    {% for m in members %}
-        <article class="member-card">
-            <div class="avatar">{{ m.name[:1] }}</div>
-            <div>
-                <h2>{{ m.name }}</h2>
-                <p>{{ m.position }}</p>
+<section class="container section-space member-sections">
+    {% if members %}
+        <div class="member-section-block">
+            <div class="section-heading">
+                <span class="eyebrow">Committee</span>
+                <h2>Administrative Section</h2>
             </div>
-        </article>
+            <div class="member-grid">
+                {% for m in administrative_members %}
+                    <article class="member-card">
+                        <div class="avatar">{{ m.name[:1] }}</div>
+                        <div>
+                            <h2>{{ m.name }}</h2>
+                            <p>{{ m.position }}</p>
+                        </div>
+                    </article>
+                {% else %}
+                    <div class="empty-state">No administrative members added yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="member-section-block">
+            <div class="section-heading">
+                <span class="eyebrow">Members</span>
+                <h2>General Member Section</h2>
+            </div>
+            <div class="member-grid">
+                {% for m in general_members %}
+                    <article class="member-card">
+                        <div class="avatar">{{ m.name[:1] }}</div>
+                        <div>
+                            <h2>{{ m.name }}</h2>
+                            <p>{{ m.position }}</p>
+                        </div>
+                    </article>
+                {% else %}
+                    <div class="empty-state">No general members added yet.</div>
+                {% endfor %}
+            </div>
+        </div>
     {% else %}
         <div class="empty-state">No members added yet.</div>
-    {% endfor %}
+    {% endif %}
 </section>
 
 {% endblock %}

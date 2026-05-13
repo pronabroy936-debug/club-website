@@ -350,6 +350,11 @@ body {
     grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.member-sections {
+    display: grid;
+    gap: 40px;
+}
+
 .member-card {
     display: flex;
     gap: 14px;
