@@ -76,6 +76,10 @@
                         <input name="title" class="form-control" value="{{ item.title }}" placeholder="Main title" required>
                         <textarea name="body" class="form-control" rows="2" placeholder="Section text" required>{{ item.body }}</textarea>
                         <input name="image" type="file" class="form-control" accept="image/*">
+                        {% if item.slug == "home" %}
+                            <small class="text-muted">Welcome section image</small>
+                            <input name="about_image" type="file" class="form-control" accept="image/*">
+                        {% endif %}
                     </div>
                     <button class="btn btn-sm btn-dark">Save</button>
                 </form>

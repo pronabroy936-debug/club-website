@@ -498,6 +498,17 @@ def update_section(slug):
         document["image_public_id"] = upload_result["public_id"]
         document["image_storage"] = upload_result["storage"]
 
+    about_image = request.files.get("about_image")
+    if slug == "home" and about_image and about_image.filename:
+        if get_media_type(about_image.filename) != "image":
+            flash("Welcome image must be JPG, PNG, GIF, or WEBP.", "danger")
+            return redirect(url_for("admin"))
+        upload_result = save_uploaded_file(about_image, "image")
+        document["about_image"] = upload_result["filename"]
+        document["about_image_url"] = upload_result["url"]
+        document["about_image_public_id"] = upload_result["public_id"]
+        document["about_image_storage"] = upload_result["storage"]
+
     try:
         db.sections.update_one({"slug": slug}, {"$set": document}, upsert=True)
         flash(f"{document['label']} section updated successfully.", "success")
