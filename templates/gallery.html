@@ -19,7 +19,18 @@
                         <source src="{{ asset_url(item.filename, item.url) }}">
                     </video>
                 {% else %}
-                    <img src="{{ asset_url(item.filename, item.url) }}" alt="Club gallery media">
+                    <button
+                        type="button"
+                        class="media-card-button"
+                        data-gallery-trigger
+                        data-image-src="{{ asset_url(item.filename, item.url) }}"
+                        data-image-title="{{ item.title or '' }}"
+                        data-image-location="{{ item.location or '' }}"
+                        data-image-category="{{ item.category or '' }}"
+                        aria-label="Open image"
+                    >
+                        <img src="{{ asset_url(item.filename, item.url) }}" alt="Club gallery media">
+                    </button>
                 {% endif %}
                 {% if item.title or item.location or item.category %}
                     <div class="media-caption">
@@ -34,5 +45,106 @@
         {% endfor %}
     </div>
 </section>
+
+<div class="gallery-lightbox" data-gallery-lightbox hidden>
+    <button type="button" class="gallery-lightbox-close" data-gallery-close aria-label="Close image viewer">
+        <i class="bi bi-x-lg"></i>
+    </button>
+    <button type="button" class="gallery-lightbox-nav prev" data-gallery-prev aria-label="Previous image">
+        <i class="bi bi-chevron-left"></i>
+    </button>
+    <figure class="gallery-lightbox-figure">
+        <img src="" alt="Expanded gallery image" data-gallery-image>
+        <figcaption class="gallery-lightbox-caption" data-gallery-caption hidden></figcaption>
+    </figure>
+    <button type="button" class="gallery-lightbox-nav next" data-gallery-next aria-label="Next image">
+        <i class="bi bi-chevron-right"></i>
+    </button>
+</div>
+
+<script>
+    (() => {
+        const triggers = Array.from(document.querySelectorAll("[data-gallery-trigger]"));
+        const lightbox = document.querySelector("[data-gallery-lightbox]");
+        const lightboxImage = document.querySelector("[data-gallery-image]");
+        const lightboxCaption = document.querySelector("[data-gallery-caption]");
+        const prevButton = document.querySelector("[data-gallery-prev]");
+        const nextButton = document.querySelector("[data-gallery-next]");
+        const closeButton = document.querySelector("[data-gallery-close]");
+
+        if (!triggers.length || !lightbox || !lightboxImage || !lightboxCaption || !prevButton || !nextButton || !closeButton) {
+            return;
+        }
+
+        let currentIndex = 0;
+
+        const buildCaption = (trigger) => {
+            const parts = [
+                trigger.dataset.imageTitle,
+                trigger.dataset.imageLocation,
+                trigger.dataset.imageCategory,
+            ].filter(Boolean);
+            return parts.join(" | ");
+        };
+
+        const renderImage = (index) => {
+            const trigger = triggers[index];
+            currentIndex = index;
+            lightboxImage.src = trigger.dataset.imageSrc;
+            lightboxCaption.textContent = buildCaption(trigger);
+            lightboxCaption.hidden = !lightboxCaption.textContent;
+        };
+
+        const openLightbox = (index) => {
+            renderImage(index);
+            lightbox.hidden = false;
+            document.body.classList.add("lightbox-open");
+        };
+
+        const closeLightbox = () => {
+            lightbox.hidden = true;
+            document.body.classList.remove("lightbox-open");
+            lightboxImage.src = "";
+            lightboxCaption.textContent = "";
+            lightboxCaption.hidden = true;
+        };
+
+        const showNext = () => {
+            renderImage((currentIndex + 1) % triggers.length);
+        };
+
+        const showPrev = () => {
+            renderImage((currentIndex - 1 + triggers.length) % triggers.length);
+        };
+
+        triggers.forEach((trigger, index) => {
+            trigger.addEventListener("click", () => openLightbox(index));
+        });
+
+        nextButton.addEventListener("click", showNext);
+        prevButton.addEventListener("click", showPrev);
+        closeButton.addEventListener("click", closeLightbox);
+
+        lightbox.addEventListener("click", (event) => {
+            if (event.target === lightbox) {
+                closeLightbox();
+            }
+        });
+
+        document.addEventListener("keydown", (event) => {
+            if (lightbox.hidden) {
+                return;
+            }
+
+            if (event.key === "Escape") {
+                closeLightbox();
+            } else if (event.key === "ArrowRight") {
+                showNext();
+            } else if (event.key === "ArrowLeft") {
+                showPrev();
+            }
+        });
+    })();
+</script>
 
 {% endblock %}
