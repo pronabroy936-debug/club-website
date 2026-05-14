@@ -262,6 +262,27 @@ def community_activities():
             "title": "Cultural Programs",
             "description": "Celebration of national days, festivals, and community events throughout the year.",
         },
+        {   
+            "title": "Social Service",
+            "description": "Community clean-up, support for local families, and social welfare activities."
+        },
+        {   
+            "title": "Youth Development",
+            "description": "Leadership, life skills, and personal growth programs for young members."
+        },
+        {   
+            "title": "Community Events", 
+            "description": "Organizing local events, competitions, and gatherings to foster community spirit."
+        },
+        {   
+            "title": "Mentorship and Guidance", 
+            "description": "Providing mentorship, career guidance, and support for students and young adults."
+         },
+         {   
+            "title": "Health and Wellness",
+            "description": "Promoting healthy lifestyles through fitness programs, nutrition awareness, and wellness workshops."
+         },
+
     ]
 
 
