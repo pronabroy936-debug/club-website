@@ -155,6 +155,9 @@ def default_programs():
         {"title": "Football", "description": "Ball control, stamina, passing drills, and team play."},
         {"title": "Yoga", "description": "Flexibility, balance, breathing, and recovery routines."},
         {"title": "Karate", "description": "Self-control, strength, confidence, and focused movement."},
+        {"title": "Chess", "description": "Strategy, tactics, critical thinking, and competitive play."},
+        {"title": "Athletics", "description": "Running, jumping, throwing, and overall fitness training."},
+        {"title": "Carrom", "description": "Precision, focus, and fun indoor game sessions."},
     ]
 
 
