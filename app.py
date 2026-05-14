@@ -199,6 +199,12 @@ def default_sections():
             "subtitle": "Media",
             "body": "Watch match-day photos, training clips, event moments, and club memories.",
         },
+        "projects": {
+            "label": "Projects",
+            "title": "Projects",
+            "subtitle": "Community Work",
+            "body": "Explore educational, service, cultural, and sports projects led by the organization.",
+        },
         "members": {
             "label": "Members",
             "title": "Members",
@@ -375,6 +381,13 @@ def gallery():
     media = find_documents(db.gallery)
     return render_template("gallery.html", media=media, section=get_section("gallery"))
 
+
+@app.route("/projects")
+def projects():
+    items = find_documents(db.projects, sort_field="project_date")
+    return render_template("projects.html", projects=items, section=get_section("projects"))
+
+
 @app.route("/admin/gallery/upload", methods=["POST"])
 @login_required
 def upload():
@@ -472,6 +485,7 @@ def admin():
     notifications = find_documents(db.notifications)
     queries = find_documents(db.queries)
     media = find_documents(db.gallery)
+    projects = find_documents(db.projects, sort_field="project_date")
     programs = find_documents(db.programs)
     sections = get_all_sections()
     return render_template(
@@ -480,6 +494,7 @@ def admin():
         notifications=notifications,
         queries=queries,
         media=media,
+        projects=projects,
         programs=programs,
         sections=sections,
         member_sections=member_sections(),
@@ -728,6 +743,48 @@ def update_program(program_id):
 @login_required
 def delete_program(program_id):
     delete_document(db.programs, program_id, "Academy program deleted successfully.")
+    return redirect(url_for("admin"))
+
+
+@app.route("/admin/projects", methods=["POST"])
+@login_required
+def add_project():
+    file = request.files.get("file")
+    if not file or not file.filename:
+        flash("Please choose an image or video for the project.", "warning")
+        return redirect(url_for("admin"))
+
+    media_type = get_media_type(file.filename)
+    if not media_type:
+        flash("Only JPG, PNG, GIF, WEBP, MP4, MOV, and WEBM files are allowed.", "danger")
+        return redirect(url_for("admin"))
+
+    upload_result = save_uploaded_file(file, media_type)
+    insert_document(db.projects, {
+        "title": request.form["title"].strip(),
+        "project_date": request.form["project_date"].strip(),
+        "description": request.form["description"].strip(),
+        "filename": upload_result["filename"],
+        "url": upload_result["url"],
+        "public_id": upload_result["public_id"],
+        "storage": upload_result["storage"],
+        "resource_type": upload_result["resource_type"],
+        "media_type": media_type,
+        "created_at": datetime.now(timezone.utc),
+    }, "Project added successfully.")
+    return redirect(url_for("admin"))
+
+
+@app.route("/admin/projects/<project_id>/delete", methods=["POST"])
+@login_required
+def delete_project(project_id):
+    try:
+        project = db.projects.find_one({"_id": ObjectId(project_id)}) or {}
+    except (PyMongoError, InvalidId):
+        project = {}
+
+    delete_saved_media(project)
+    delete_document(db.projects, project_id, "Project deleted successfully.")
     return redirect(url_for("admin"))
 
 

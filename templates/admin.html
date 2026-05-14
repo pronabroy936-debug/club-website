@@ -166,6 +166,50 @@
         </div>
     </div>
 
+    <div class="admin-section">
+        <div class="section-heading">
+            <span class="eyebrow">Projects</span>
+            <h2>Project Updates</h2>
+        </div>
+        <form action="{{ url_for('add_project') }}" method="post" enctype="multipart/form-data" class="form-panel admin-form-grid">
+            <div>
+                <label class="form-label" for="project-title">Project title</label>
+                <input id="project-title" name="title" class="form-control" placeholder="Library renovation" required>
+            </div>
+            <div>
+                <label class="form-label" for="project-date">Project date</label>
+                <input id="project-date" type="date" name="project_date" class="form-control" required>
+            </div>
+            <div>
+                <label class="form-label" for="project-file">Image or video</label>
+                <input id="project-file" type="file" name="file" class="form-control" accept="image/*,video/*" required>
+            </div>
+            <div>
+                <label class="form-label" for="project-description">About project</label>
+                <textarea id="project-description" name="description" class="form-control" rows="2" placeholder="Write a few details about the project" required></textarea>
+            </div>
+            <button class="btn btn-dark">Add Project</button>
+        </form>
+
+        <div class="admin-list mt-3">
+            <h3>Added projects</h3>
+            {% for item in projects %}
+                <div class="admin-edit-row">
+                    <div class="project-admin-row">
+                        <strong>{{ item.title }}</strong>
+                        <span>{{ item.project_date }}</span>
+                        <p>{{ item.description }}</p>
+                    </div>
+                    <form action="{{ url_for('delete_project', project_id=item._id) }}" method="post">
+                        <button class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </div>
+            {% else %}
+                <div class="empty-state">No projects added yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+
     <div class="admin-section two-column">
         <div>
             <div class="section-heading">
