@@ -166,7 +166,8 @@ body {
 }
 
 .about-image {
-    width: 100%;
+    width: 350px;
+    max-width: 100%;
     margin-top: 20px;
     aspect-ratio: 6 / 5;
     display: block;
