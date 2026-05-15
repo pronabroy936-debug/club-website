@@ -131,7 +131,29 @@
             <span class="eyebrow">Live Now</span>
             <h2>{{ live_stream.title }}</h2>
             <p>{{ live_stream.description }}</p>
-            <a href="{{ live_stream.watch_url }}" target="_blank" rel="noopener" class="btn btn-dark">Watch on YouTube</a>
+            <div class="live-actions">
+                <a href="{{ live_stream.watch_url }}" target="_blank" rel="noopener" class="btn btn-dark">Watch on YouTube</a>
+                <div class="share-row">
+                    <a class="share-button" href="https://wa.me/?text={{ (live_stream.title ~ ' ' ~ live_stream.watch_url) | urlencode }}" target="_blank" rel="noopener" aria-label="Share on WhatsApp">
+                        <i class="bi bi-whatsapp"></i>
+                    </a>
+                    <a class="share-button" href="https://www.facebook.com/sharer/sharer.php?u={{ live_stream.watch_url | urlencode }}" target="_blank" rel="noopener" aria-label="Share on Facebook">
+                        <i class="bi bi-facebook"></i>
+                    </a>
+                    <a class="share-button" href="https://t.me/share/url?url={{ live_stream.watch_url | urlencode }}&text={{ live_stream.title | urlencode }}" target="_blank" rel="noopener" aria-label="Share on Telegram">
+                        <i class="bi bi-telegram"></i>
+                    </a>
+                    <a class="share-button" href="mailto:?subject={{ live_stream.title | urlencode }}&body={{ live_stream.watch_url | urlencode }}" aria-label="Share by email">
+                        <i class="bi bi-envelope"></i>
+                    </a>
+                    <button type="button" class="share-button" data-copy-link="{{ live_stream.watch_url }}" aria-label="Copy live stream link">
+                        <i class="bi bi-link-45deg"></i>
+                    </button>
+                    <button type="button" class="share-button" data-native-share="{{ live_stream.watch_url }}" data-share-title="{{ live_stream.title }}" aria-label="Share live stream">
+                        <i class="bi bi-share"></i>
+                    </button>
+                </div>
+            </div>
         </div>
         <div class="live-player">
             <iframe
@@ -195,5 +217,43 @@
         </div>
     </div>
 </section>
+
+<script>
+    (() => {
+        const copyButtons = document.querySelectorAll("[data-copy-link]");
+        copyButtons.forEach((button) => {
+            button.addEventListener("click", async () => {
+                const url = button.dataset.copyLink;
+                if (!url) {
+                    return;
+                }
+                try {
+                    await navigator.clipboard.writeText(url);
+                    button.classList.add("is-copied");
+                    setTimeout(() => button.classList.remove("is-copied"), 1400);
+                } catch (error) {
+                    window.prompt("Copy this live stream link:", url);
+                }
+            });
+        });
+
+        const nativeShareButtons = document.querySelectorAll("[data-native-share]");
+        nativeShareButtons.forEach((button) => {
+            button.addEventListener("click", async () => {
+                const url = button.dataset.nativeShare;
+                const title = button.dataset.shareTitle || "Live Stream";
+                if (!navigator.share || !url) {
+                    window.open(url, "_blank", "noopener");
+                    return;
+                }
+                try {
+                    await navigator.share({ title, url });
+                } catch (error) {
+                    // User canceled or platform ignored share.
+                }
+            });
+        });
+    })();
+</script>
 
 {% endblock %}

@@ -223,6 +223,42 @@ body {
     line-height: 1.7;
 }
 
+.live-actions {
+    display: grid;
+    gap: 14px;
+}
+
+.share-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.share-button {
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--line);
+    display: grid;
+    place-items: center;
+    color: var(--ink);
+    background: #ffffff;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.share-button:hover,
+.share-button:focus {
+    color: #ffffff;
+    background: var(--brand);
+    transform: translateY(-2px);
+}
+
+.share-button.is-copied {
+    color: #ffffff;
+    background: var(--brand-dark);
+}
+
 .live-player {
     overflow: hidden;
     border: 1px solid var(--line);
