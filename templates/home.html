@@ -125,7 +125,8 @@
 {% endif %}
 
 {% if live_stream.embed_url %}
-<section class="live-band">
+{% set live_share_url = url_for('home', _external=True) ~ '#live-now' %}
+<section class="live-band" id="live-now">
     <div class="container live-grid">
         <div class="live-copy">
             <span class="eyebrow">Live Now</span>
@@ -134,22 +135,22 @@
             <div class="live-actions">
                 <a href="{{ live_stream.watch_url }}" target="_blank" rel="noopener" class="btn btn-dark">Watch on YouTube</a>
                 <div class="share-row">
-                    <a class="share-button" href="https://wa.me/?text={{ (live_stream.title ~ ' ' ~ live_stream.watch_url) | urlencode }}" target="_blank" rel="noopener" aria-label="Share on WhatsApp">
+                    <a class="share-button" href="https://wa.me/?text={{ (live_stream.title ~ ' ' ~ live_share_url) | urlencode }}" target="_blank" rel="noopener" aria-label="Share on WhatsApp">
                         <i class="bi bi-whatsapp"></i>
                     </a>
-                    <a class="share-button" href="https://www.facebook.com/sharer/sharer.php?u={{ live_stream.watch_url | urlencode }}" target="_blank" rel="noopener" aria-label="Share on Facebook">
+                    <a class="share-button" href="https://www.facebook.com/sharer/sharer.php?u={{ live_share_url | urlencode }}" target="_blank" rel="noopener" aria-label="Share on Facebook">
                         <i class="bi bi-facebook"></i>
                     </a>
-                    <a class="share-button" href="https://t.me/share/url?url={{ live_stream.watch_url | urlencode }}&text={{ live_stream.title | urlencode }}" target="_blank" rel="noopener" aria-label="Share on Telegram">
+                    <a class="share-button" href="https://t.me/share/url?url={{ live_share_url | urlencode }}&text={{ live_stream.title | urlencode }}" target="_blank" rel="noopener" aria-label="Share on Telegram">
                         <i class="bi bi-telegram"></i>
                     </a>
-                    <a class="share-button" href="mailto:?subject={{ live_stream.title | urlencode }}&body={{ live_stream.watch_url | urlencode }}" aria-label="Share by email">
+                    <a class="share-button" href="mailto:?subject={{ live_stream.title | urlencode }}&body={{ live_share_url | urlencode }}" aria-label="Share by email">
                         <i class="bi bi-envelope"></i>
                     </a>
-                    <button type="button" class="share-button" data-copy-link="{{ live_stream.watch_url }}" aria-label="Copy live stream link">
+                    <button type="button" class="share-button" data-copy-link="{{ live_share_url }}" aria-label="Copy live stream link">
                         <i class="bi bi-link-45deg"></i>
                     </button>
-                    <button type="button" class="share-button" data-native-share="{{ live_stream.watch_url }}" data-share-title="{{ live_stream.title }}" aria-label="Share live stream">
+                    <button type="button" class="share-button" data-native-share="{{ live_share_url }}" data-share-title="{{ live_stream.title }}" aria-label="Share live stream">
                         <i class="bi bi-share"></i>
                     </button>
                 </div>
