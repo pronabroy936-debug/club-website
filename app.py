@@ -364,6 +364,22 @@ def get_live_stream():
     return data
 
 
+def get_featured_video():
+    data = {
+        "title": "Featured Video",
+        "description": "Watch an important YouTube video directly on the website.",
+        "watch_url": "",
+        "embed_url": "",
+    }
+    try:
+        saved = db.settings.find_one({"key": "featured_video"}) or {}
+        video_data = saved.get("data", {})
+        data.update(video_data)
+    except PyMongoError:
+        pass
+    return data
+
+
 def get_social_links():
     links = {
         "whatsapp": SOCIAL_WHATSAPP,
@@ -406,6 +422,7 @@ def home():
         profile=organization_profile(),
         activities=community_activities()[:3],
         live_stream=get_live_stream(),
+        featured_video=get_featured_video(),
         section=get_section("home"),
     )
 
@@ -548,6 +565,7 @@ def admin():
         sections=sections,
         member_sections=member_sections(),
         live_stream=get_live_stream(),
+        featured_video=get_featured_video(),
         social_links=get_social_links(),
     )
 
@@ -734,6 +752,59 @@ def update_live_stream():
         flash("Live stream settings updated successfully.", "success")
     except PyMongoError:
         flash("Could not update live stream settings. Check MongoDB connection.", "danger")
+
+    return redirect(url_for("admin"))
+
+
+@app.route("/admin/featured-video", methods=["POST"])
+@login_required
+def update_featured_video():
+    watch_url = request.form.get("watch_url", "").strip()
+    embed_url = get_youtube_embed_url(watch_url)
+
+    if watch_url and not embed_url:
+        flash("Please paste a valid YouTube video, live, share, or embed link.", "danger")
+        return redirect(url_for("admin"))
+
+    data = {
+        "title": request.form.get("title", "").strip() or "Featured Video",
+        "description": request.form.get("description", "").strip() or "Watch an important YouTube video directly on the website.",
+        "watch_url": watch_url,
+        "embed_url": embed_url,
+        "updated_at": datetime.now(timezone.utc),
+    }
+
+    try:
+        db.settings.update_one(
+            {"key": "featured_video"},
+            {"$set": {"key": "featured_video", "data": data, "updated_at": datetime.now(timezone.utc)}},
+            upsert=True,
+        )
+        flash("Featured video updated successfully.", "success")
+    except PyMongoError:
+        flash("Could not update featured video. Check MongoDB connection.", "danger")
+
+    return redirect(url_for("admin"))
+
+
+@app.route("/admin/featured-video/delete", methods=["POST"])
+@login_required
+def delete_featured_video():
+    try:
+        db.settings.update_one(
+            {"key": "featured_video"},
+            {"$set": {"key": "featured_video", "data": {
+                "title": "Featured Video",
+                "description": "Watch an important YouTube video directly on the website.",
+                "watch_url": "",
+                "embed_url": "",
+                "updated_at": datetime.now(timezone.utc),
+            }, "updated_at": datetime.now(timezone.utc)}},
+            upsert=True,
+        )
+        flash("Featured video link deleted successfully.", "success")
+    except PyMongoError:
+        flash("Could not delete featured video link. Check MongoDB connection.", "danger")
 
     return redirect(url_for("admin"))
 

@@ -143,6 +143,34 @@
 
     <div class="admin-section">
         <div class="section-heading">
+            <span class="eyebrow">YouTube video</span>
+            <h2>Featured Video Embed</h2>
+        </div>
+        <form action="{{ url_for('update_featured_video') }}" method="post" class="form-panel">
+            <label class="form-label" for="video-title">Section title</label>
+            <input id="video-title" name="title" class="form-control" value="{{ featured_video.title }}" placeholder="Featured Video">
+
+            <label class="form-label" for="video-description">Short text</label>
+            <textarea id="video-description" name="description" class="form-control" rows="3" placeholder="Short information about the video">{{ featured_video.description }}</textarea>
+
+            <label class="form-label" for="video-watch-url">YouTube video URL or embed URL</label>
+            <input id="video-watch-url" name="watch_url" class="form-control" value="{{ featured_video.watch_url }}" placeholder="https://www.youtube.com/watch?v=...">
+
+            <small class="text-muted">Paste any YouTube video link to show it on the website.</small>
+            <div class="admin-button-row">
+                <button class="btn btn-dark mt-3">Save Video</button>
+                {% if featured_video.watch_url %}
+                    <button class="btn btn-outline-danger mt-3" type="submit" form="delete-featured-video-form">Delete Video Link</button>
+                {% endif %}
+            </div>
+        </form>
+        {% if featured_video.watch_url %}
+            <form id="delete-featured-video-form" action="{{ url_for('delete_featured_video') }}" method="post"></form>
+        {% endif %}
+    </div>
+
+    <div class="admin-section">
+        <div class="section-heading">
             <span class="eyebrow">Gallery</span>
             <h2>Upload Media</h2>
         </div>

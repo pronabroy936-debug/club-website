@@ -199,6 +199,10 @@ body {
     border-bottom: 1px solid var(--line);
 }
 
+.video-band {
+    background: linear-gradient(135deg, #f0fdf4, #ffffff);
+}
+
 .live-grid {
     display: grid;
     grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.15fr);
@@ -666,6 +670,13 @@ body.lightbox-open {
 
 .admin-list {
     padding: 24px;
+}
+
+.admin-button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
 }
 
 .section-manager {
