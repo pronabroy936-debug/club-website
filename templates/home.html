@@ -124,6 +124,27 @@
 </section>
 {% endif %}
 
+{% if live_stream.embed_url %}
+<section class="live-band">
+    <div class="container live-grid">
+        <div class="live-copy">
+            <span class="eyebrow">Live Now</span>
+            <h2>{{ live_stream.title }}</h2>
+            <p>{{ live_stream.description }}</p>
+            <a href="{{ live_stream.watch_url }}" target="_blank" rel="noopener" class="btn btn-dark">Watch on YouTube</a>
+        </div>
+        <div class="live-player">
+            <iframe
+                src="{{ live_stream.embed_url }}"
+                title="{{ live_stream.title }}"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+            ></iframe>
+        </div>
+    </div>
+</section>
+{% endif %}
+
 <section class="content-band">
     <div class="container feature-grid">
         {% for activity in activities %}

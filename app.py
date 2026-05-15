@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from functools import wraps
 from pathlib import Path
 import os
+from urllib.parse import parse_qs, urlparse
 
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -316,6 +317,53 @@ def normalize_member_section(value):
     return value if value in member_sections() else "general"
 
 
+def get_youtube_embed_url(value):
+    if not value:
+        return ""
+
+    parsed = urlparse(value.strip())
+    host = parsed.netloc.lower().replace("www.", "")
+    path = parsed.path.strip("/")
+    video_id = ""
+
+    if host in {"youtube.com", "m.youtube.com"}:
+        if path == "watch":
+            video_id = parse_qs(parsed.query).get("v", [""])[0]
+        elif path.startswith("embed/"):
+            video_id = path.split("/", 1)[1]
+        elif path.startswith("live/"):
+            video_id = path.split("/", 1)[1]
+        elif path == "shorts":
+            video_id = parse_qs(parsed.query).get("v", [""])[0]
+    elif host == "youtu.be":
+        video_id = path.split("/", 1)[0]
+
+    if not video_id:
+        return ""
+
+    video_id = video_id.split("?")[0].split("&")[0].strip()
+    if not video_id:
+        return ""
+
+    return f"https://www.youtube.com/embed/{video_id}"
+
+
+def get_live_stream():
+    data = {
+        "title": "Live Streaming",
+        "description": "Watch the latest live program directly on the website through YouTube Live.",
+        "watch_url": "",
+        "embed_url": "",
+    }
+    try:
+        saved = db.settings.find_one({"key": "live_stream"}) or {}
+        live_data = saved.get("data", {})
+        data.update(live_data)
+    except PyMongoError:
+        pass
+    return data
+
+
 def get_social_links():
     links = {
         "whatsapp": SOCIAL_WHATSAPP,
@@ -357,6 +405,7 @@ def home():
         notifications=notifications[:3],
         profile=organization_profile(),
         activities=community_activities()[:3],
+        live_stream=get_live_stream(),
         section=get_section("home"),
     )
 
@@ -498,6 +547,7 @@ def admin():
         programs=programs,
         sections=sections,
         member_sections=member_sections(),
+        live_stream=get_live_stream(),
         social_links=get_social_links(),
     )
 
@@ -653,6 +703,37 @@ def update_social_links():
         flash("Social media links updated successfully.", "success")
     except PyMongoError:
         flash("Could not update social links. Check MongoDB connection.", "danger")
+
+    return redirect(url_for("admin"))
+
+
+@app.route("/admin/live-stream", methods=["POST"])
+@login_required
+def update_live_stream():
+    watch_url = request.form.get("watch_url", "").strip()
+    embed_url = get_youtube_embed_url(watch_url)
+
+    if watch_url and not embed_url:
+        flash("Please paste a valid YouTube video, live, share, or embed link.", "danger")
+        return redirect(url_for("admin"))
+
+    data = {
+        "title": request.form.get("title", "").strip() or "Live Streaming",
+        "description": request.form.get("description", "").strip() or "Watch the latest live program directly on the website through YouTube Live.",
+        "watch_url": watch_url,
+        "embed_url": embed_url,
+        "updated_at": datetime.now(timezone.utc),
+    }
+
+    try:
+        db.settings.update_one(
+            {"key": "live_stream"},
+            {"$set": {"key": "live_stream", "data": data, "updated_at": datetime.now(timezone.utc)}},
+            upsert=True,
+        )
+        flash("Live stream settings updated successfully.", "success")
+    except PyMongoError:
+        flash("Could not update live stream settings. Check MongoDB connection.", "danger")
 
     return redirect(url_for("admin"))
 

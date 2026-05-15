@@ -194,6 +194,46 @@ body {
     border-bottom: 1px solid var(--line);
 }
 
+.live-band {
+    background: linear-gradient(135deg, #fff7ed, #ffffff);
+    border-bottom: 1px solid var(--line);
+}
+
+.live-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.15fr);
+    gap: 28px;
+    align-items: center;
+}
+
+.live-copy h2 {
+    margin: 0;
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    font-weight: 850;
+}
+
+.live-copy p {
+    margin: 16px 0 22px;
+    color: var(--muted);
+    font-size: 1.02rem;
+    line-height: 1.7;
+}
+
+.live-player {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: #111827;
+    border-radius: 8px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+}
+
+.live-player iframe {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    display: block;
+    border: 0;
+}
+
 .section-heading {
     margin-bottom: 18px;
 }
@@ -853,6 +893,7 @@ body.lightbox-open {
     .hero-grid,
     .admin-layout,
     .about-grid,
+    .live-grid,
     .cta-grid,
     .contact-layout,
     .two-column,

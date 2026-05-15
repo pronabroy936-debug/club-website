@@ -123,6 +123,26 @@
 
     <div class="admin-section">
         <div class="section-heading">
+            <span class="eyebrow">Live stream</span>
+            <h2>YouTube Live Embed</h2>
+        </div>
+        <form action="{{ url_for('update_live_stream') }}" method="post" class="form-panel">
+            <label class="form-label" for="live-title">Section title</label>
+            <input id="live-title" name="title" class="form-control" value="{{ live_stream.title }}" placeholder="Live Streaming">
+
+            <label class="form-label" for="live-description">Short text</label>
+            <textarea id="live-description" name="description" class="form-control" rows="3" placeholder="Short information about the live stream">{{ live_stream.description }}</textarea>
+
+            <label class="form-label" for="live-watch-url">YouTube live URL or embed URL</label>
+            <input id="live-watch-url" name="watch_url" class="form-control" value="{{ live_stream.watch_url }}" placeholder="https://www.youtube.com/watch?v=...">
+
+            <small class="text-muted">Leave the YouTube URL empty to hide the live section from the website.</small>
+            <button class="btn btn-dark mt-3">Save Live Stream</button>
+        </form>
+    </div>
+
+    <div class="admin-section">
+        <div class="section-heading">
             <span class="eyebrow">Gallery</span>
             <h2>Upload Media</h2>
         </div>
