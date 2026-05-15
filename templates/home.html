@@ -145,22 +145,27 @@
 </section>
 {% endif %}
 
-{% if featured_video.embed_url %}
+{% set active_featured_videos = featured_video.videos | selectattr('embed_url') | list %}
+{% if active_featured_videos %}
 <section class="live-band video-band">
     <div class="container live-grid">
         <div class="live-copy">
             <span class="eyebrow">Featured Video</span>
             <h2>{{ featured_video.title }}</h2>
             <p>{{ featured_video.description }}</p>
-            <a href="{{ featured_video.watch_url }}" target="_blank" rel="noopener" class="btn btn-dark">Watch on YouTube</a>
+            <a href="{{ active_featured_videos[0].watch_url }}" target="_blank" rel="noopener" class="btn btn-dark">Watch on YouTube</a>
         </div>
-        <div class="live-player">
-            <iframe
-                src="{{ featured_video.embed_url }}"
-                title="{{ featured_video.title }}"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowfullscreen
-            ></iframe>
+        <div class="video-player-grid">
+            {% for item in active_featured_videos %}
+                <div class="live-player">
+                    <iframe
+                        src="{{ item.embed_url }}"
+                        title="{{ featured_video.title }} {{ loop.index }}"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowfullscreen
+                    ></iframe>
+                </div>
+            {% endfor %}
         </div>
     </div>
 </section>

@@ -368,8 +368,7 @@ def get_featured_video():
     data = {
         "title": "Featured Video",
         "description": "Watch an important YouTube video directly on the website.",
-        "watch_url": "",
-        "embed_url": "",
+        "videos": [],
     }
     try:
         saved = db.settings.find_one({"key": "featured_video"}) or {}
@@ -377,6 +376,27 @@ def get_featured_video():
         data.update(video_data)
     except PyMongoError:
         pass
+
+    videos = data.get("videos") or []
+    if not videos and data.get("watch_url") and data.get("embed_url"):
+        videos = [{
+            "watch_url": data.get("watch_url", ""),
+            "embed_url": data.get("embed_url", ""),
+        }]
+
+    normalized_videos = []
+    for item in videos[:5]:
+        watch_url = (item or {}).get("watch_url", "").strip()
+        embed_url = (item or {}).get("embed_url", "").strip()
+        normalized_videos.append({
+            "watch_url": watch_url,
+            "embed_url": embed_url,
+        })
+
+    while len(normalized_videos) < 5:
+        normalized_videos.append({"watch_url": "", "embed_url": ""})
+
+    data["videos"] = normalized_videos
     return data
 
 
@@ -759,18 +779,24 @@ def update_live_stream():
 @app.route("/admin/featured-video", methods=["POST"])
 @login_required
 def update_featured_video():
-    watch_url = request.form.get("watch_url", "").strip()
-    embed_url = get_youtube_embed_url(watch_url)
+    videos = []
+    for index in range(1, 6):
+        watch_url = request.form.get(f"watch_url_{index}", "").strip()
+        embed_url = get_youtube_embed_url(watch_url)
 
-    if watch_url and not embed_url:
-        flash("Please paste a valid YouTube video, live, share, or embed link.", "danger")
-        return redirect(url_for("admin"))
+        if watch_url and not embed_url:
+            flash(f"Please paste a valid YouTube link in Video {index}.", "danger")
+            return redirect(url_for("admin"))
+
+        videos.append({
+            "watch_url": watch_url,
+            "embed_url": embed_url,
+        })
 
     data = {
         "title": request.form.get("title", "").strip() or "Featured Video",
         "description": request.form.get("description", "").strip() or "Watch an important YouTube video directly on the website.",
-        "watch_url": watch_url,
-        "embed_url": embed_url,
+        "videos": videos,
         "updated_at": datetime.now(timezone.utc),
     }
 
@@ -787,22 +813,31 @@ def update_featured_video():
     return redirect(url_for("admin"))
 
 
-@app.route("/admin/featured-video/delete", methods=["POST"])
+@app.route("/admin/featured-video/<int:index>/delete", methods=["POST"])
 @login_required
-def delete_featured_video():
+def delete_featured_video(index):
+    if index < 1 or index > 5:
+        flash("Unknown video slot.", "danger")
+        return redirect(url_for("admin"))
+
     try:
+        current = get_featured_video()
+        videos = current.get("videos", [])
+        while len(videos) < 5:
+            videos.append({"watch_url": "", "embed_url": ""})
+
+        videos[index - 1] = {"watch_url": "", "embed_url": ""}
         db.settings.update_one(
             {"key": "featured_video"},
             {"$set": {"key": "featured_video", "data": {
-                "title": "Featured Video",
-                "description": "Watch an important YouTube video directly on the website.",
-                "watch_url": "",
-                "embed_url": "",
+                "title": current.get("title", "Featured Video"),
+                "description": current.get("description", "Watch an important YouTube video directly on the website."),
+                "videos": videos,
                 "updated_at": datetime.now(timezone.utc),
             }, "updated_at": datetime.now(timezone.utc)}},
             upsert=True,
         )
-        flash("Featured video link deleted successfully.", "success")
+        flash(f"Video {index} link deleted successfully.", "success")
     except PyMongoError:
         flash("Could not delete featured video link. Check MongoDB connection.", "danger")
 
