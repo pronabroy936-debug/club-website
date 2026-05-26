@@ -424,6 +424,40 @@ def manifest():
     return send_from_directory("static", "manifest.webmanifest", mimetype="application/manifest+json")
 
 
+@app.route("/robots.txt")
+def robots():
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /admin",
+        "Disallow: /admin/",
+        "Disallow: /admin/login",
+        f"Sitemap: {url_for('sitemap', _external=True)}",
+    ]
+    response = make_response("\n".join(lines) + "\n")
+    response.headers["Content-Type"] = "text/plain; charset=utf-8"
+    return response
+
+
+@app.route("/sitemap.xml")
+def sitemap():
+    pages = [
+        url_for("home", _external=True),
+        url_for("gallery", _external=True),
+        url_for("projects", _external=True),
+        url_for("activities", _external=True),
+        url_for("utsav", _external=True),
+        url_for("academy", _external=True),
+        url_for("admission", _external=True),
+        url_for("members", _external=True),
+        url_for("contact", _external=True),
+    ]
+    xml = render_template("sitemap.xml", pages=pages, lastmod=datetime.now(timezone.utc).date().isoformat())
+    response = make_response(xml)
+    response.headers["Content-Type"] = "application/xml; charset=utf-8"
+    return response
+
+
 @app.route("/service-worker.js")
 def service_worker():
     response = make_response(send_from_directory("static", "service-worker.js", mimetype="application/javascript"))
