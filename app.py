@@ -29,6 +29,7 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = SECRET_KEY
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
+app.config["PREFERRED_URL_SCHEME"] = "https"
 
 ALLOWED_EXTENSIONS = {
     "jpg": "image",
@@ -91,6 +92,12 @@ def asset_url(filename="", uploaded_url=""):
     if filename:
         return url_for("static", filename=f"uploads/{filename}")
     return ""
+
+
+def external_url(endpoint, **values):
+    values.setdefault("_external", True)
+    values.setdefault("_scheme", "https")
+    return url_for(endpoint, **values)
 
 
 def login_required(view):
@@ -432,7 +439,7 @@ def robots():
         "Disallow: /admin",
         "Disallow: /admin/",
         "Disallow: /admin/login",
-        f"Sitemap: {url_for('sitemap', _external=True)}",
+        f"Sitemap: {external_url('sitemap')}",
     ]
     response = make_response("\n".join(lines) + "\n")
     response.headers["Content-Type"] = "text/plain; charset=utf-8"
@@ -442,15 +449,15 @@ def robots():
 @app.route("/sitemap.xml")
 def sitemap():
     pages = [
-        url_for("home", _external=True),
-        url_for("gallery", _external=True),
-        url_for("projects", _external=True),
-        url_for("activities", _external=True),
-        url_for("utsav", _external=True),
-        url_for("academy", _external=True),
-        url_for("admission", _external=True),
-        url_for("members", _external=True),
-        url_for("contact", _external=True),
+        external_url("home"),
+        external_url("gallery"),
+        external_url("projects"),
+        external_url("activities"),
+        external_url("utsav"),
+        external_url("academy"),
+        external_url("admission"),
+        external_url("members"),
+        external_url("contact"),
     ]
     xml = render_template("sitemap.xml", pages=pages, lastmod=datetime.now(timezone.utc).date().isoformat())
     response = make_response(xml)
