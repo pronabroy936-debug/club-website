@@ -195,45 +195,45 @@ body {
 }
 
 .donation-band {
-    background: linear-gradient(135deg, #ecfeff, #ffffff);
+    background: linear-gradient(135deg, #ecfeff, #f8fafc 50%, #ffffff);
     border-bottom: 1px solid var(--line);
 }
 
 .donation-grid {
     display: grid;
-    grid-template-columns: minmax(260px, 0.85fr) minmax(320px, 1.15fr);
-    gap: 28px;
+    grid-template-columns: minmax(260px, 0.9fr) minmax(320px, 1.1fr);
+    gap: 24px;
     align-items: start;
 }
 
 .donation-copy h2 {
     margin: 0;
-    font-size: clamp(1.9rem, 3vw, 2.7rem);
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
     font-weight: 850;
 }
 
 .donation-copy p {
-    margin: 16px 0 22px;
+    margin: 14px 0 18px;
     color: var(--muted);
-    font-size: 1.02rem;
-    line-height: 1.7;
+    font-size: 1rem;
+    line-height: 1.65;
 }
 
 .donation-meta,
 .donation-steps,
 .donation-stack {
     display: grid;
-    gap: 14px;
+    gap: 12px;
 }
 
 .donation-meta {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin-bottom: 18px;
+    margin-bottom: 14px;
 }
 
 .donation-meta div,
 .donation-steps span {
-    padding: 14px 16px;
+    padding: 12px 14px;
     border: 1px solid var(--line);
     background: #ffffff;
     border-radius: 8px;
@@ -251,7 +251,7 @@ body {
 }
 
 .donation-card {
-    padding: 24px;
+    padding: 20px;
     border: 1px solid var(--line);
     background: #ffffff;
     border-radius: 8px;
@@ -260,7 +260,7 @@ body {
 
 .qr-card {
     display: grid;
-    gap: 16px;
+    gap: 14px;
     justify-items: center;
 }
 
@@ -269,6 +269,17 @@ body {
     display: block;
     border: 1px solid var(--line);
     border-radius: 8px;
+}
+
+.donation-action-stack {
+    width: 100%;
+    display: grid;
+    gap: 10px;
+}
+
+.donation-pay-button,
+.donation-copy-button {
+    width: 100%;
 }
 
 .donation-form h3 {

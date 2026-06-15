@@ -220,7 +220,10 @@
         <div class="donation-stack">
             <article class="donation-card qr-card">
                 <img class="donation-qr" src="{{ donation.qr_url }}" alt="UPI donation QR code">
-                <a class="btn btn-dark" href="{{ donation.upi_uri }}">Pay by UPI App</a>
+                <div class="donation-action-stack">
+                    <button type="button" class="btn btn-dark donation-pay-button" data-upi-link="{{ donation.upi_uri }}">Pay by UPI App</button>
+                    <button type="button" class="btn btn-outline-dark donation-copy-button" data-copy-upi="{{ donation.upi_id }}">Copy UPI ID</button>
+                </div>
             </article>
 
             <form action="{{ url_for('donate') }}" method="post" class="donation-card donation-form">
@@ -294,6 +297,38 @@
                     await navigator.share({ title, url });
                 } catch (error) {
                     // User canceled or platform ignored share.
+                }
+            });
+        });
+
+        const donationPayButtons = document.querySelectorAll("[data-upi-link]");
+        donationPayButtons.forEach((button) => {
+            button.addEventListener("click", () => {
+                const upiLink = button.dataset.upiLink;
+                if (!upiLink) {
+                    return;
+                }
+
+                window.location.href = upiLink;
+            });
+        });
+
+        const donationCopyButtons = document.querySelectorAll("[data-copy-upi]");
+        donationCopyButtons.forEach((button) => {
+            button.addEventListener("click", async () => {
+                const upiId = button.dataset.copyUpi;
+                if (!upiId) {
+                    return;
+                }
+
+                try {
+                    await navigator.clipboard.writeText(upiId);
+                    button.textContent = "UPI ID Copied";
+                    setTimeout(() => {
+                        button.textContent = "Copy UPI ID";
+                    }, 1400);
+                } catch (error) {
+                    window.prompt("Copy this UPI ID:", upiId);
                 }
             });
         });
