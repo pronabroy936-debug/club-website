@@ -194,6 +194,89 @@ body {
     border-bottom: 1px solid var(--line);
 }
 
+.donation-band {
+    background: linear-gradient(135deg, #ecfeff, #ffffff);
+    border-bottom: 1px solid var(--line);
+}
+
+.donation-grid {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.85fr) minmax(320px, 1.15fr);
+    gap: 28px;
+    align-items: start;
+}
+
+.donation-copy h2 {
+    margin: 0;
+    font-size: clamp(1.9rem, 3vw, 2.7rem);
+    font-weight: 850;
+}
+
+.donation-copy p {
+    margin: 16px 0 22px;
+    color: var(--muted);
+    font-size: 1.02rem;
+    line-height: 1.7;
+}
+
+.donation-meta,
+.donation-steps,
+.donation-stack {
+    display: grid;
+    gap: 14px;
+}
+
+.donation-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 18px;
+}
+
+.donation-meta div,
+.donation-steps span {
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+}
+
+.donation-meta strong {
+    display: block;
+    margin-bottom: 6px;
+}
+
+.donation-meta span {
+    color: var(--muted);
+    word-break: break-word;
+}
+
+.donation-card {
+    padding: 24px;
+    border: 1px solid var(--line);
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+}
+
+.qr-card {
+    display: grid;
+    gap: 16px;
+    justify-items: center;
+}
+
+.donation-qr {
+    width: min(100%, 280px);
+    display: block;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+}
+
+.donation-form h3 {
+    margin: 0 0 16px;
+    font-size: 1.2rem;
+    font-weight: 850;
+}
+
 .live-band {
     background: linear-gradient(135deg, #fff7ed, #ffffff);
     border-bottom: 1px solid var(--line);
@@ -958,6 +1041,7 @@ body.lightbox-open {
     .hero-grid,
     .admin-layout,
     .about-grid,
+    .donation-grid,
     .live-grid,
     .cta-grid,
     .contact-layout,
@@ -978,6 +1062,10 @@ body.lightbox-open {
     .media-grid,
     .notification-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .donation-meta {
+        grid-template-columns: 1fr;
     }
 
     .video-player-grid {

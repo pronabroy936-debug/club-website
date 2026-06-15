@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from functools import wraps
 from pathlib import Path
 import os
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, quote, urlparse
 
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -407,6 +407,18 @@ def get_featured_video():
     return data
 
 
+def get_donation_details():
+    upi_id = "42263804680@sbi"
+    payee_name = "Vivekananda Sangathan"
+    upi_uri = f"upi://pay?pa={quote(upi_id)}&pn={quote(payee_name)}&cu=INR"
+    return {
+        "upi_id": upi_id,
+        "payee_name": payee_name,
+        "upi_uri": upi_uri,
+        "qr_url": f"https://quickchart.io/qr?text={quote(upi_uri)}&size=320",
+    }
+
+
 def get_social_links():
     links = {
         "whatsapp": SOCIAL_WHATSAPP,
@@ -484,6 +496,7 @@ def home():
         activities=community_activities()[:3],
         live_stream=get_live_stream(),
         featured_video=get_featured_video(),
+        donation=get_donation_details(),
         section=get_section("home"),
     )
 
@@ -568,6 +581,23 @@ def academy():
     return render_template("academy.html", programs=programs, section=get_section("academy"))
 
 # ---------------- CONTACT ----------------
+@app.route("/donate", methods=["POST"])
+def donate():
+    insert_document(db.donations, {
+        "name": request.form["name"].strip(),
+        "phone": request.form["phone"].strip(),
+        "email": request.form.get("email", "").strip(),
+        "amount": request.form["amount"].strip(),
+        "transaction_ref": request.form["transaction_ref"].strip(),
+        "note": request.form.get("note", "").strip(),
+        "status": "submitted",
+        "payment_method": "UPI QR",
+        "upi_id": get_donation_details()["upi_id"],
+        "created_at": datetime.now(timezone.utc),
+    }, "Thank you. Your donation details have been submitted successfully.")
+    return redirect(url_for("home") + "#donate")
+
+
 @app.route("/contact", methods=["GET", "POST"])
 def contact():
     if request.method == "POST":
@@ -611,6 +641,7 @@ def admin():
     members = find_documents(db.members)
     notifications = find_documents(db.notifications)
     queries = find_documents(db.queries)
+    donations = find_documents(db.donations)
     media = find_documents(db.gallery)
     projects = find_documents(db.projects, sort_field="project_date")
     programs = find_documents(db.programs)
@@ -620,6 +651,7 @@ def admin():
         members=members,
         notifications=notifications,
         queries=queries,
+        donations=donations,
         media=media,
         projects=projects,
         programs=programs,
@@ -645,6 +677,16 @@ def mark_query_read(query_id):
 @login_required
 def delete_query(query_id):
     delete_document(db.queries, query_id, "Message deleted successfully.")
+    return redirect(url_for("admin"))
+
+
+@app.route("/admin/donations/<donation_id>/verify", methods=["POST"])
+@login_required
+def verify_donation(donation_id):
+    update_document(db.donations, donation_id, {
+        "status": "verified",
+        "verified_at": datetime.now(timezone.utc),
+    }, "Donation marked as verified.")
     return redirect(url_for("admin"))
 
 

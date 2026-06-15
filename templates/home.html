@@ -194,6 +194,49 @@
 </section>
 {% endif %}
 
+<section class="donation-band" id="donate">
+    <div class="container donation-grid">
+        <div class="donation-copy">
+            <span class="eyebrow">Support Us</span>
+            <h2>Donate Through UPI QR</h2>
+            <p>Your contribution helps us continue education support, sports training, welfare work, and community programs.</p>
+            <div class="donation-meta">
+                <div>
+                    <strong>UPI ID</strong>
+                    <span>{{ donation.upi_id }}</span>
+                </div>
+                <div>
+                    <strong>Account Name</strong>
+                    <span>{{ donation.payee_name }}</span>
+                </div>
+            </div>
+            <div class="donation-steps">
+                <span>1. Scan the QR with any UPI app.</span>
+                <span>2. Complete the payment.</span>
+                <span>3. Submit the payment details below so we can trace and verify the donation.</span>
+            </div>
+        </div>
+
+        <div class="donation-stack">
+            <article class="donation-card qr-card">
+                <img class="donation-qr" src="{{ donation.qr_url }}" alt="UPI donation QR code">
+                <a class="btn btn-dark" href="{{ donation.upi_uri }}">Pay by UPI App</a>
+            </article>
+
+            <form action="{{ url_for('donate') }}" method="post" class="donation-card donation-form">
+                <h3>Submit Payment Details</h3>
+                <input name="name" class="form-control" placeholder="Full Name" required>
+                <input name="phone" class="form-control" placeholder="Phone Number" required>
+                <input name="email" type="email" class="form-control" placeholder="Email Address">
+                <input name="amount" class="form-control" placeholder="Amount Paid" required>
+                <input name="transaction_ref" class="form-control" placeholder="UPI Transaction / UTR Number" required>
+                <textarea name="note" class="form-control" rows="3" placeholder="Optional message"></textarea>
+                <button class="btn btn-dark">I Have Paid</button>
+            </form>
+        </div>
+    </div>
+</section>
+
 <section class="content-band">
     <div class="container feature-grid">
         {% for activity in activities %}
