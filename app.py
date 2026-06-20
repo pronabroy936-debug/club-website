@@ -2,7 +2,10 @@ from datetime import datetime, timezone
 from functools import wraps
 from pathlib import Path
 import os
+import time
 from urllib.parse import parse_qs, quote, urlparse
+from urllib.request import urlopen
+import xml.etree.ElementTree as ET
 
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -46,6 +49,14 @@ Path(app.config["UPLOAD_FOLDER"]).mkdir(parents=True, exist_ok=True)
 
 if CLOUDINARY_URL:
     cloudinary.config(cloudinary_url=CLOUDINARY_URL, secure=True)
+
+
+SPORTS_FEED_URLS = [
+    ("ESPN", "https://www.espn.com/espn/rss/news"),
+    ("BBC Sport", "https://feeds.bbci.co.uk/sport/rss.xml"),
+]
+SPORTS_CACHE_TTL = 900
+SPORTS_CACHE = {"items": [], "fetched_at": 0.0}
 
 
 def get_media_type(filename):
@@ -433,6 +444,91 @@ def get_social_links():
     return links
 
 
+def parse_feed_date(value):
+    if not value:
+        return ""
+
+    for fmt in (
+        "%a, %d %b %Y %H:%M:%S %z",
+        "%a, %d %b %Y %H:%M:%S GMT",
+        "%Y-%m-%dT%H:%M:%S%z",
+        "%Y-%m-%dT%H:%M:%SZ",
+    ):
+        try:
+            parsed = datetime.strptime(value, fmt)
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            return parsed.strftime("%d %b %Y")
+        except ValueError:
+            continue
+
+    return value[:16]
+
+
+def fetch_feed_items(source_name, feed_url):
+    with urlopen(feed_url, timeout=8) as response:
+        xml_bytes = response.read()
+
+    root = ET.fromstring(xml_bytes)
+    items = []
+
+    for item in root.findall(".//item"):
+        title = (item.findtext("title") or "").strip()
+        link = (item.findtext("link") or "").strip()
+        pub_date = parse_feed_date((item.findtext("pubDate") or "").strip())
+        if title and link:
+            items.append({
+                "title": title,
+                "link": link,
+                "source": source_name,
+                "published_at": pub_date,
+            })
+
+    if items:
+        return items
+
+    namespace = {"atom": "http://www.w3.org/2005/Atom"}
+    for entry in root.findall(".//atom:entry", namespace):
+        title = (entry.findtext("atom:title", default="", namespaces=namespace) or "").strip()
+        link = ""
+        link_element = entry.find("atom:link", namespace)
+        if link_element is not None:
+            link = (link_element.attrib.get("href") or "").strip()
+        pub_date = parse_feed_date(
+            (entry.findtext("atom:published", default="", namespaces=namespace) or
+             entry.findtext("atom:updated", default="", namespaces=namespace) or "").strip()
+        )
+        if title and link:
+            items.append({
+                "title": title,
+                "link": link,
+                "source": source_name,
+                "published_at": pub_date,
+            })
+
+    return items
+
+
+def get_sports_headlines():
+    now = time.time()
+    cached_items = SPORTS_CACHE.get("items", [])
+    if cached_items and now - SPORTS_CACHE.get("fetched_at", 0.0) < SPORTS_CACHE_TTL:
+        return cached_items
+
+    items = []
+    for source_name, feed_url in SPORTS_FEED_URLS:
+        try:
+            items.extend(fetch_feed_items(source_name, feed_url))
+        except Exception:
+            continue
+
+    if items:
+        SPORTS_CACHE["items"] = items[:18]
+        SPORTS_CACHE["fetched_at"] = now
+
+    return SPORTS_CACHE.get("items", [])
+
+
 @app.context_processor
 def inject_global_data():
     return {"social_links": get_social_links(), "asset_url": asset_url}
@@ -500,6 +596,7 @@ def home():
         notifications=notifications[:3],
         profile=organization_profile(),
         activities=community_activities()[:3],
+        sports_headlines=get_sports_headlines(),
         live_stream=get_live_stream(),
         featured_video=get_featured_video(),
         donation=get_donation_details(),

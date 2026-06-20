@@ -217,6 +217,87 @@ body {
     border-bottom: 1px solid var(--line);
 }
 
+.sports-band {
+    padding: 18px 0;
+    background: #ffffff;
+    border-bottom: 1px solid var(--line);
+}
+
+.sports-shell {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 16px;
+    align-items: center;
+}
+
+.sports-label {
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 14px;
+    color: #ffffff;
+    background: var(--brand-dark);
+    border-radius: 999px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.sports-ticker {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: #f8fafc;
+    border-radius: 999px;
+}
+
+.sports-track {
+    width: max-content;
+    display: flex;
+    gap: 14px;
+    align-items: stretch;
+    padding: 10px 14px;
+    animation: sports-scroll 70s linear infinite;
+}
+
+.sports-ticker:hover .sports-track,
+.sports-ticker:focus-within .sports-track {
+    animation-play-state: paused;
+}
+
+.sports-item {
+    min-width: 280px;
+    max-width: 360px;
+    display: grid;
+    gap: 4px;
+    padding-right: 14px;
+    color: var(--ink);
+    text-decoration: none;
+    border-right: 1px solid var(--line);
+}
+
+.sports-item strong {
+    font-size: 0.98rem;
+    line-height: 1.35;
+}
+
+.sports-item:hover strong,
+.sports-item:focus strong {
+    color: var(--brand);
+}
+
+.sports-meta {
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+@keyframes sports-scroll {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-50%);
+    }
+}
+
 .donation-band {
     background: linear-gradient(135deg, #ecfeff, #f8fafc 50%, #ffffff);
     border-bottom: 1px solid var(--line);
@@ -1075,6 +1156,7 @@ body.lightbox-open {
     .hero-grid,
     .admin-layout,
     .about-grid,
+    .sports-shell,
     .donation-grid,
     .live-grid,
     .cta-grid,
@@ -1096,6 +1178,10 @@ body.lightbox-open {
     .media-grid,
     .notification-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sports-item {
+        min-width: 240px;
     }
 
     .donation-meta {
