@@ -519,6 +519,12 @@ def parse_feed_date(value):
     return value[:16]
 
 
+def as_utc_datetime(value):
+    if isinstance(value, datetime) and value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value
+
+
 def fetch_feed_items(source_name, feed_url):
     request = Request(feed_url, headers={"User-Agent": "Mozilla/5.0"})
     with urlopen(request, timeout=8) as response:
@@ -665,7 +671,7 @@ def refresh_job_headlines():
 def get_job_headlines():
     try:
         sync_info = db.settings.find_one({"key": "job_headlines_sync"}) or {}
-        updated_at = sync_info.get("updated_at")
+        updated_at = as_utc_datetime(sync_info.get("updated_at"))
     except PyMongoError:
         updated_at = None
 
