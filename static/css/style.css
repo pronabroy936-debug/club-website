@@ -181,6 +181,29 @@ body {
     background: linear-gradient(135deg, var(--brand-dark), #7c2d12);
 }
 
+.legal-band {
+    padding: 18px 0 26px;
+    background: #ffffff;
+}
+
+.legal-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    justify-content: center;
+}
+
+.legal-links a {
+    color: var(--brand-dark);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.legal-links a:hover,
+.legal-links a:focus {
+    color: var(--brand);
+}
+
 .cta-actions {
     display: flex;
     flex-wrap: wrap;

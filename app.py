@@ -521,6 +521,17 @@ def utsav():
 def admission():
     return render_template("admission.html", profile=organization_profile(), section=get_section("admission"))
 
+
+@app.route("/privacy-policy")
+def privacy_policy():
+    return render_template("privacy_policy.html")
+
+
+@app.route("/terms-and-conditions")
+def terms_and_conditions():
+    return render_template("terms_and_conditions.html")
+
+
 # ---------------- GALLERY ----------------
 @app.route("/gallery")
 def gallery():
