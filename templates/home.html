@@ -29,6 +29,33 @@
 </section>
 {% endif %}
 
+{% if job_headlines %}
+<section class="jobs-band jobs-band-top">
+    <div class="container sports-shell">
+        <div class="jobs-label">
+            <i class="bi bi-file-earmark-text"></i>
+            <span>Government Jobs</span>
+        </div>
+        <div class="jobs-ticker" aria-label="Latest government job notices">
+            <div class="jobs-track">
+                {% for item in job_headlines %}
+                    <a href="{{ item.link }}" target="_blank" rel="noopener" class="jobs-item">
+                        <strong>{{ item.title }}</strong>
+                        <span class="jobs-meta">{{ item.source }}</span>
+                    </a>
+                {% endfor %}
+                {% for item in job_headlines %}
+                    <a href="{{ item.link }}" target="_blank" rel="noopener" class="jobs-item" aria-hidden="true" tabindex="-1">
+                        <strong>{{ item.title }}</strong>
+                        <span class="jobs-meta">{{ item.source }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
 <section class="hero-section"{% if section.image or section.image_url %} style="background-image: linear-gradient(115deg, rgba(15, 118, 110, 0.94), rgba(17, 24, 39, 0.92)), url('{{ asset_url(section.image, section.image_url) }}');"{% endif %}>
     <div class="container hero-grid">
         <div class="hero-copy">

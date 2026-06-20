@@ -230,6 +230,13 @@ body {
     border-bottom: 0;
 }
 
+.jobs-band-top {
+    padding-top: 0;
+    padding-bottom: 12px;
+    background: transparent;
+    border-bottom: 0;
+}
+
 .sports-shell {
     display: grid;
     gap: 12px;
@@ -248,10 +255,30 @@ body {
     white-space: nowrap;
 }
 
+.jobs-label {
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 14px;
+    color: #ffffff;
+    background: #7c2d12;
+    border-radius: 999px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
 .sports-ticker {
     overflow: hidden;
     border: 1px solid var(--line);
     background: #f8fafc;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.jobs-ticker {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: #fff7ed;
     border-radius: 999px;
     white-space: nowrap;
 }
@@ -265,8 +292,22 @@ body {
     animation: sports-scroll 110s linear infinite;
 }
 
+.jobs-track {
+    width: max-content;
+    display: flex;
+    gap: 0;
+    align-items: center;
+    padding: 10px 0;
+    animation: sports-scroll 120s linear infinite;
+}
+
 .sports-ticker:hover .sports-track,
 .sports-ticker:focus-within .sports-track {
+    animation-play-state: paused;
+}
+
+.jobs-ticker:hover .jobs-track,
+.jobs-ticker:focus-within .jobs-track {
     animation-play-state: paused;
 }
 
@@ -282,6 +323,18 @@ body {
     white-space: nowrap;
 }
 
+.jobs-item {
+    flex: 0 0 auto;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    padding: 0 18px;
+    color: var(--ink);
+    text-decoration: none;
+    border-right: 1px solid #fed7aa;
+    white-space: nowrap;
+}
+
 .sports-item strong {
     font-size: 0.98rem;
     line-height: 1.2;
@@ -292,9 +345,21 @@ body {
     color: var(--brand);
 }
 
+.jobs-item:hover strong,
+.jobs-item:focus strong {
+    color: #9a3412;
+}
+
 .sports-meta {
     flex: 0 0 auto;
     color: var(--muted);
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+.jobs-meta {
+    flex: 0 0 auto;
+    color: #9a3412;
     font-size: 0.82rem;
     white-space: nowrap;
 }

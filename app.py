@@ -3,8 +3,10 @@ from functools import wraps
 from pathlib import Path
 import os
 import time
+from html import unescape
+from html.parser import HTMLParser
 from urllib.parse import parse_qs, quote, urlparse
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 import xml.etree.ElementTree as ET
 
 from bson import ObjectId
@@ -57,6 +59,58 @@ SPORTS_FEED_URLS = [
 ]
 SPORTS_CACHE_TTL = 900
 SPORTS_CACHE = {"items": [], "fetched_at": 0.0}
+JOB_FETCH_INTERVAL = 21600
+JOB_SOURCE_URLS = [
+    ("WBPSC", "https://psc.wb.gov.in"),
+    ("WB Government", "https://wb.gov.in/documents-notification.aspx"),
+    ("Panchayat Recruitment", "https://wbprms.in"),
+]
+JOB_KEYWORDS = (
+    "recruit",
+    "recruitment",
+    "clerkship",
+    "vacancy",
+    "vacancies",
+    "group c",
+    "group d",
+    "exam",
+    "advertisement",
+    "job",
+    "posts",
+    "apply",
+    "panchayat",
+)
+
+
+class AnchorParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.links = []
+        self.current_href = ""
+        self.capture_text = False
+        self.current_text = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag.lower() != "a":
+            return
+        attributes = dict(attrs)
+        self.current_href = attributes.get("href", "").strip()
+        self.capture_text = True
+        self.current_text = []
+
+    def handle_data(self, data):
+        if self.capture_text:
+            self.current_text.append(data)
+
+    def handle_endtag(self, tag):
+        if tag.lower() != "a" or not self.capture_text:
+            return
+        text = " ".join(part.strip() for part in self.current_text if part.strip()).strip()
+        if self.current_href and text:
+            self.links.append((self.current_href, unescape(text)))
+        self.current_href = ""
+        self.current_text = []
+        self.capture_text = False
 
 
 def get_media_type(filename):
@@ -466,7 +520,8 @@ def parse_feed_date(value):
 
 
 def fetch_feed_items(source_name, feed_url):
-    with urlopen(feed_url, timeout=8) as response:
+    request = Request(feed_url, headers={"User-Agent": "Mozilla/5.0"})
+    with urlopen(request, timeout=8) as response:
         xml_bytes = response.read()
 
     root = ET.fromstring(xml_bytes)
@@ -527,6 +582,116 @@ def get_sports_headlines():
         SPORTS_CACHE["fetched_at"] = now
 
     return SPORTS_CACHE.get("items", [])
+
+
+def fetch_job_page_links(source_name, source_url):
+    request = Request(source_url, headers={"User-Agent": "Mozilla/5.0"})
+    with urlopen(request, timeout=10) as response:
+        html = response.read().decode("utf-8", errors="ignore")
+
+    parser = AnchorParser()
+    parser.feed(html)
+
+    items = []
+    for href, title in parser.links:
+        normalized_title = " ".join(title.split())
+        normalized_href = href.strip()
+        if not normalized_href or not normalized_title:
+            continue
+
+        lower_title = normalized_title.lower()
+        if not any(keyword in lower_title for keyword in JOB_KEYWORDS):
+            continue
+
+        if normalized_href.startswith("/"):
+            normalized_href = source_url.rstrip("/") + normalized_href
+        elif not normalized_href.startswith("http"):
+            normalized_href = source_url.rstrip("/") + "/" + normalized_href.lstrip("/")
+
+        items.append({
+            "source": source_name,
+            "title": normalized_title,
+            "link": normalized_href,
+        })
+
+    return items
+
+
+def refresh_job_headlines():
+    collected = []
+    seen_links = set()
+
+    for source_name, source_url in JOB_SOURCE_URLS:
+        try:
+            links = fetch_job_page_links(source_name, source_url)
+        except Exception:
+            continue
+
+        for item in links:
+            if item["link"] in seen_links:
+                continue
+            seen_links.add(item["link"])
+            collected.append(item)
+            if len(collected) >= 18:
+                break
+        if len(collected) >= 18:
+            break
+
+    if not collected:
+        return []
+
+    try:
+        db.job_headlines.delete_many({})
+        db.job_headlines.insert_many([
+            {
+                "source": item["source"],
+                "title": item["title"],
+                "link": item["link"],
+                "created_at": datetime.now(timezone.utc),
+            }
+            for item in collected
+        ])
+        db.settings.update_one(
+            {"key": "job_headlines_sync"},
+            {"$set": {"key": "job_headlines_sync", "updated_at": datetime.now(timezone.utc)}},
+            upsert=True,
+        )
+    except PyMongoError:
+        return []
+
+    return collected
+
+
+def get_job_headlines():
+    try:
+        sync_info = db.settings.find_one({"key": "job_headlines_sync"}) or {}
+        updated_at = sync_info.get("updated_at")
+    except PyMongoError:
+        updated_at = None
+
+    needs_refresh = True
+    if isinstance(updated_at, datetime):
+        needs_refresh = (datetime.now(timezone.utc) - updated_at).total_seconds() >= JOB_FETCH_INTERVAL
+
+    if needs_refresh:
+        refreshed = refresh_job_headlines()
+        if refreshed:
+            return refreshed
+
+    try:
+        saved = list(db.job_headlines.find().sort("created_at", -1).limit(18))
+    except PyMongoError:
+        return []
+
+    return [
+        {
+            "source": item.get("source", ""),
+            "title": item.get("title", ""),
+            "link": item.get("link", ""),
+        }
+        for item in saved
+        if item.get("title") and item.get("link")
+    ]
 
 
 @app.context_processor
@@ -597,6 +762,7 @@ def home():
         profile=organization_profile(),
         activities=community_activities()[:3],
         sports_headlines=get_sports_headlines(),
+        job_headlines=get_job_headlines(),
         live_stream=get_live_stream(),
         featured_video=get_featured_video(),
         donation=get_donation_details(),
