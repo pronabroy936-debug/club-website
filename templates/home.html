@@ -2,6 +2,33 @@
 {% block title %}Vivekananda Sangathan | Home{% endblock %}
 {% block content %}
 
+{% if sports_headlines %}
+<section class="sports-band sports-band-top">
+    <div class="container sports-shell">
+        <div class="sports-label">
+            <i class="bi bi-trophy"></i>
+            <span>Sports News</span>
+        </div>
+        <div class="sports-ticker" aria-label="Latest sports headlines">
+            <div class="sports-track">
+                {% for item in sports_headlines %}
+                    <a href="{{ item.link }}" target="_blank" rel="noopener" class="sports-item">
+                        <strong>{{ item.title }}</strong>
+                        <span class="sports-meta">{{ item.source }}{% if item.published_at %} • {{ item.published_at }}{% endif %}</span>
+                    </a>
+                {% endfor %}
+                {% for item in sports_headlines %}
+                    <a href="{{ item.link }}" target="_blank" rel="noopener" class="sports-item" aria-hidden="true" tabindex="-1">
+                        <strong>{{ item.title }}</strong>
+                        <span class="sports-meta">{{ item.source }}{% if item.published_at %} • {{ item.published_at }}{% endif %}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
 <section class="hero-section"{% if section.image or section.image_url %} style="background-image: linear-gradient(115deg, rgba(15, 118, 110, 0.94), rgba(17, 24, 39, 0.92)), url('{{ asset_url(section.image, section.image_url) }}');"{% endif %}>
     <div class="container hero-grid">
         <div class="hero-copy">
@@ -119,33 +146,6 @@
                     <p>{{ note.message }}</p>
                 </article>
             {% endfor %}
-        </div>
-    </div>
-</section>
-{% endif %}
-
-{% if sports_headlines %}
-<section class="sports-band">
-    <div class="container sports-shell">
-        <div class="sports-label">
-            <i class="bi bi-trophy"></i>
-            <span>Sports News</span>
-        </div>
-        <div class="sports-ticker" aria-label="Latest sports headlines">
-            <div class="sports-track">
-                {% for item in sports_headlines %}
-                    <a href="{{ item.link }}" target="_blank" rel="noopener" class="sports-item">
-                        <strong>{{ item.title }}</strong>
-                        <span class="sports-meta">{{ item.source }}{% if item.published_at %} • {{ item.published_at }}{% endif %}</span>
-                    </a>
-                {% endfor %}
-                {% for item in sports_headlines %}
-                    <a href="{{ item.link }}" target="_blank" rel="noopener" class="sports-item" aria-hidden="true" tabindex="-1">
-                        <strong>{{ item.title }}</strong>
-                        <span class="sports-meta">{{ item.source }}{% if item.published_at %} • {{ item.published_at }}{% endif %}</span>
-                    </a>
-                {% endfor %}
-            </div>
         </div>
     </div>
 </section>

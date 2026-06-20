@@ -223,6 +223,13 @@ body {
     border-bottom: 1px solid var(--line);
 }
 
+.sports-band-top {
+    padding-top: 0;
+    padding-bottom: 0;
+    background: transparent;
+    border-bottom: 0;
+}
+
 .sports-shell {
     display: grid;
     gap: 12px;
@@ -255,7 +262,7 @@ body {
     gap: 0;
     align-items: center;
     padding: 10px 0;
-    animation: sports-scroll 70s linear infinite;
+    animation: sports-scroll 110s linear infinite;
 }
 
 .sports-ticker:hover .sports-track,
