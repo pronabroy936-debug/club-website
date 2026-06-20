@@ -443,6 +443,12 @@ def manifest():
     return send_from_directory("static", "manifest.webmanifest", mimetype="application/manifest+json")
 
 
+# Serve the AdSense ads.txt file from the site root for crawlers like Google.
+@app.route("/ads.txt")
+def ads_txt():
+    return send_from_directory(app.root_path, "ads.txt", mimetype="text/plain")
+
+
 @app.route("/robots.txt")
 def robots():
     lines = [
