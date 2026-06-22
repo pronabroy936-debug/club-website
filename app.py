@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from functools import wraps
 from pathlib import Path
 import json
@@ -96,6 +96,7 @@ SPORTS_CENTER_DEFAULT = {
 SPORTS_CENTER_CACHE_TTL = 600
 SPORTS_CENTER_CACHE_VERSION = 2
 FOOTBALL_DATA_BASE_URL = "https://api.football-data.org/v4"
+IST = timezone(timedelta(hours=5, minutes=30))
 SPORTS_COMPETITION_PRESETS = [
     {"code": "WC", "label": "FIFA World Cup"},
     {"code": "CL", "label": "UEFA Champions League"},
@@ -566,7 +567,7 @@ def format_football_datetime(value):
     parsed = parse_football_datetime(value)
     if not parsed:
         return ""
-    return parsed.astimezone().strftime("%d %b %H:%M")
+    return parsed.astimezone(IST).strftime("%d %b %H:%M")
 
 
 def football_data_request(path, params=None):
@@ -589,15 +590,19 @@ def fetch_football_center_payload(settings):
     competition_code = settings.get("football_competition_code", "WC")
     season = settings.get("football_season", "2026")
     standings_endpoint = f"{FOOTBALL_DATA_BASE_URL}/competitions/{competition_code}/standings?{urlencode({'season': season})}"
+    live_statuses = ["LIVE", "IN_PLAY", "PAUSED"]
 
     standings_payload = football_data_request(
         f"/competitions/{competition_code}/standings",
         {"season": season},
     ) or {}
-    live_payload = football_data_request(
-        f"/competitions/{competition_code}/matches",
-        {"status": "LIVE", "season": season},
-    ) or {}
+    live_matches_payload = []
+    for status in live_statuses:
+        payload = football_data_request(
+            f"/competitions/{competition_code}/matches",
+            {"status": status, "season": season},
+        ) or {}
+        live_matches_payload.extend(payload.get("matches", []))
     fixtures_payload = football_data_request(
         f"/competitions/{competition_code}/matches",
         {"status": "SCHEDULED", "season": season, "limit": 8},
@@ -662,7 +667,12 @@ def fetch_football_center_payload(settings):
     )
 
     live_matches = []
-    for match in live_payload.get("matches", [])[:6]:
+    seen_live_matches = set()
+    for match in live_matches_payload:
+        match_id = match.get("id")
+        if match_id in seen_live_matches:
+            continue
+        seen_live_matches.add(match_id)
         home_team = match.get("homeTeam", {}) or {}
         away_team = match.get("awayTeam", {}) or {}
         score = match.get("score", {}) or {}
@@ -679,11 +689,22 @@ def fetch_football_center_payload(settings):
             "stage": match.get("stage") or "",
             "matchday": match.get("matchday"),
         })
+        if len(live_matches) >= 6:
+            break
 
     fixtures = []
-    for match in fixtures_payload.get("matches", [])[:8]:
+    seen_fixture_pairs = set()
+    for match in fixtures_payload.get("matches", []):
         home_team = match.get("homeTeam", {}) or {}
         away_team = match.get("awayTeam", {}) or {}
+        pair_key = (
+            home_team.get("id"),
+            away_team.get("id"),
+            match.get("utcDate"),
+        )
+        if pair_key in seen_fixture_pairs:
+            continue
+        seen_fixture_pairs.add(pair_key)
         fixtures.append({
             "home": home_team.get("shortName") or home_team.get("name") or "",
             "away": away_team.get("shortName") or away_team.get("name") or "",
@@ -693,6 +714,14 @@ def fetch_football_center_payload(settings):
             "stage": match.get("stage") or "",
             "matchday": match.get("matchday"),
         })
+        if len(fixtures) >= 8:
+            break
+
+    app.logger.debug(
+        "Football live/fixture fetch: live_matches=%s fixtures=%s",
+        len(live_matches),
+        len(fixtures),
+    )
 
     return {
         "sport": "football",
