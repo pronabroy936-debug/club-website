@@ -1,4 +1,4 @@
-const CACHE_NAME = "vivekananda-sangathan-v6";
+const CACHE_NAME = "vivekananda-sangathan-v7";
 
 const STATIC_ASSETS = [
   "/",

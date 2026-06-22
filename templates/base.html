@@ -123,13 +123,12 @@
 
                             <article class="sports-center-card sports-center-card-compact">
                                 <div class="sports-card-head">
-                                    <strong>Points Table</strong>
+                                    <strong>{{ sports_center.standings_title or 'Points Table' }}</strong>
                                     <span>Auto update</span>
                                 </div>
                                 <div class="sports-card-body sports-standings">
-                                    {% for table in sports_center.standings %}
+                                    {% if sports_center.standings_rows %}
                                         <div class="sports-table-block sports-table-card">
-                                            <strong class="sports-group-title">{{ table.group }}</strong>
                                             <div class="sports-table-wrap">
                                                 <table class="sports-table">
                                                     <thead>
@@ -141,7 +140,7 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {% for row in table.rows %}
+                                                        {% for row in sports_center.standings_rows %}
                                                             <tr>
                                                                 <td><span class="rank-badge">{{ row.position }}</span></td>
                                                                 <td>
@@ -160,7 +159,7 @@
                                         </div>
                                     {% else %}
                                         <div class="empty-state sports-empty">Standings will appear here once the API returns data.</div>
-                                    {% endfor %}
+                                    {% endif %}
                                 </div>
                             </article>
 

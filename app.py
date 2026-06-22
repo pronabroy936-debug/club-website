@@ -602,13 +602,18 @@ def fetch_football_center_payload(settings):
         {"status": "SCHEDULED", "season": season, "limit": 8},
     ) or {}
 
-    standings_groups = []
+    standings_rows = []
+    total_groups = 0
     total_teams = 0
     for table_group in standings_payload.get("standings", []):
-        rows = []
+        group_name = (table_group.get("group") or table_group.get("stage") or "").strip().upper()
+        if group_name != "GROUP_STAGE":
+            continue
+
+        total_groups += 1
         for row in table_group.get("table", []):
             team = row.get("team", {}) or {}
-            rows.append({
+            standings_rows.append({
                 "position": row.get("position"),
                 "team": team.get("shortName") or team.get("name") or "",
                 "crest": team.get("crest") or "",
@@ -620,17 +625,23 @@ def fetch_football_center_payload(settings):
                 "goals_against": row.get("goalsAgainst"),
                 "goal_difference": row.get("goalDifference"),
                 "points": row.get("points"),
+                "group": table_group.get("group") or table_group.get("stage") or "GROUP_STAGE",
             })
-        total_teams += len(rows)
-        standings_groups.append({
-            "group": table_group.get("group") or table_group.get("stage") or "Standings",
-            "rows": rows,
-        })
+
+    standings_rows.sort(
+        key=lambda row: (
+            -(row.get("points") or 0),
+            -(row.get("goal_difference") or 0),
+            -(row.get("goals_for") or 0),
+            row.get("position") or 0,
+        )
+    )
+    total_teams = len(standings_rows)
 
     app.logger.debug(
-        "Football standings fetch: endpoint=%s groups=%s teams=%s",
+        "Football standings fetch: endpoint=%s group_stage_groups=%s teams=%s",
         standings_endpoint,
-        len(standings_groups),
+        total_groups,
         total_teams,
     )
 
@@ -674,9 +685,10 @@ def fetch_football_center_payload(settings):
         "competition_code": competition_code,
         "competition_name": settings.get("football_competition_name", "Football Competition"),
         "season": season,
+        "standings_title": "Points Table",
+        "standings_rows": standings_rows,
         "live_matches": live_matches,
         "fixtures": fixtures,
-        "standings": standings_groups,
         "live_now": any(match.get("status") in {"LIVE", "IN_PLAY", "PAUSED"} for match in live_matches),
         "source": "Football-Data.org",
         "updated_at": datetime.now(timezone.utc),
