@@ -94,6 +94,7 @@ SPORTS_CENTER_DEFAULT = {
     "cricket_widget_title": "Cricket Center",
 }
 SPORTS_CENTER_CACHE_TTL = 600
+SPORTS_CENTER_CACHE_VERSION = 2
 FOOTBALL_DATA_BASE_URL = "https://api.football-data.org/v4"
 SPORTS_COMPETITION_PRESETS = [
     {"code": "WC", "label": "FIFA World Cup"},
@@ -602,18 +603,15 @@ def fetch_football_center_payload(settings):
         {"status": "SCHEDULED", "season": season, "limit": 8},
     ) or {}
 
-    standings_rows = []
+    all_standings_rows = []
+    group_stage_rows = []
     total_groups = 0
-    total_teams = 0
     for table_group in standings_payload.get("standings", []):
         group_name = (table_group.get("group") or table_group.get("stage") or "").strip().upper()
-        if group_name != "GROUP_STAGE":
-            continue
-
-        total_groups += 1
         for row in table_group.get("table", []):
             team = row.get("team", {}) or {}
-            standings_rows.append({
+            row_data = {
+                "team_id": team.get("id"),
                 "position": row.get("position"),
                 "team": team.get("shortName") or team.get("name") or "",
                 "crest": team.get("crest") or "",
@@ -626,7 +624,24 @@ def fetch_football_center_payload(settings):
                 "goal_difference": row.get("goalDifference"),
                 "points": row.get("points"),
                 "group": table_group.get("group") or table_group.get("stage") or "GROUP_STAGE",
-            })
+            }
+            all_standings_rows.append(row_data)
+            if group_name == "GROUP_STAGE":
+                group_stage_rows.append(row_data)
+        if table_group.get("table"):
+            total_groups += 1
+
+    standings_source = group_stage_rows or all_standings_rows
+    standings_rows = []
+    seen_teams = set()
+    duplicates_filtered = 0
+    for row in standings_source:
+        dedupe_key = row.get("team_id") or row.get("team", "").strip().lower()
+        if dedupe_key in seen_teams:
+            duplicates_filtered += 1
+            continue
+        seen_teams.add(dedupe_key)
+        standings_rows.append(row)
 
     standings_rows.sort(
         key=lambda row: (
@@ -639,10 +654,11 @@ def fetch_football_center_payload(settings):
     total_teams = len(standings_rows)
 
     app.logger.debug(
-        "Football standings fetch: endpoint=%s group_stage_groups=%s teams=%s",
+        "Football standings fetch: endpoint=%s groups=%s teams=%s duplicates_filtered=%s",
         standings_endpoint,
         total_groups,
         total_teams,
+        duplicates_filtered,
     )
 
     live_matches = []
@@ -687,6 +703,7 @@ def fetch_football_center_payload(settings):
         "season": season,
         "standings_title": "Points Table",
         "standings_rows": standings_rows,
+        "cache_version": SPORTS_CENTER_CACHE_VERSION,
         "live_matches": live_matches,
         "fixtures": fixtures,
         "live_now": any(match.get("status") in {"LIVE", "IN_PLAY", "PAUSED"} for match in live_matches),
@@ -708,6 +725,7 @@ def fetch_cricket_center_payload(settings):
         "active_sport": "cricket",
         "widget": widget,
         "widget_script": widget_scripts.get(widget, widget_scripts["matchlist"]),
+        "cache_version": SPORTS_CENTER_CACHE_VERSION,
         "live_now": True,
         "source": "CricketData.org",
         "updated_at": datetime.now(timezone.utc),
@@ -743,7 +761,8 @@ def get_sports_center():
         updated_at = None
         cached_data = {}
 
-    if isinstance(updated_at, datetime):
+    cached_version = cached_data.get("cache_version")
+    if isinstance(updated_at, datetime) and cached_version == SPORTS_CENTER_CACHE_VERSION:
         age = (datetime.now(timezone.utc) - updated_at).total_seconds()
         if age < SPORTS_CENTER_CACHE_TTL and cached_data:
             return cached_data
