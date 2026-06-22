@@ -52,6 +52,167 @@
     </div>
 </nav>
 
+{% if request.path == '/' and sports_center is defined and sports_center %}
+<section class="sports-center-launch">
+    <div class="container">
+        <div class="sports-center-launch-card">
+            <button class="sports-center-launch-btn" type="button" data-bs-toggle="collapse" data-bs-target="#sportsCenterPanel" aria-expanded="false" aria-controls="sportsCenterPanel">
+                <span class="sports-center-launch-icon"><i class="bi bi-trophy-fill"></i></span>
+                <span class="sports-center-launch-copy">
+                    <strong>{{ sports_center.title }}</strong>
+                    <small>{{ sports_center.competition_name }}{% if sports_center.live_now %} Live Now{% endif %}</small>
+                </span>
+                <span class="sports-live-badge {% if sports_center.live_now %}is-animated{% endif %}">
+                    <span class="sports-live-dot"></span>
+                    Live
+                </span>
+                <span class="sports-center-launch-action">
+                    <i class="bi bi-chevron-down"></i>
+                </span>
+            </button>
+            <div class="collapse" id="sportsCenterPanel">
+                <div class="sports-center-launch-panel">
+                    <div class="sports-tournament-banner">
+                        <div>
+                            <span class="sports-tournament-eyebrow">Tournament</span>
+                            <h2>{{ sports_center.competition_name }}</h2>
+                        </div>
+                        <div class="sports-tournament-meta">
+                            <span><i class="bi bi-badge-ad"></i> {{ sports_center.competition_code }}</span>
+                            {% if sports_center.season %}<span><i class="bi bi-calendar-event"></i> {{ sports_center.season }}</span>{% endif %}
+                            <span><i class="bi bi-globe2"></i> {{ sports_center.source }}</span>
+                        </div>
+                    </div>
+                    {% if sports_center.active_sport == "football" %}
+                        <div class="sports-center-grid sports-center-grid-compact">
+                            <article class="sports-center-card sports-center-card-compact">
+                                <div class="sports-card-head">
+                                    <strong>Live Matches</strong>
+                                    <span>{{ sports_center.competition_code }}{% if sports_center.season %} / {{ sports_center.season }}{% endif %}</span>
+                                </div>
+                                <div class="sports-card-body">
+                                    {% for match in sports_center.live_matches %}
+                                        <div class="sports-match-row {% if match.status in ['LIVE', 'IN_PLAY', 'PAUSED'] %}is-live{% endif %}">
+                                            <div class="match-teams">
+                                                <span class="team-pill">
+                                                    {% if match.home_crest %}<img src="{{ match.home_crest }}" alt="{{ match.home }} flag">{% else %}<span>{{ match.home[:1] }}</span>{% endif %}
+                                                    {{ match.home }}
+                                                </span>
+                                                <span class="match-vs">vs</span>
+                                                <span class="team-pill">
+                                                    {% if match.away_crest %}<img src="{{ match.away_crest }}" alt="{{ match.away }} flag">{% else %}<span>{{ match.away[:1] }}</span>{% endif %}
+                                                    {{ match.away }}
+                                                </span>
+                                                <small>{% if match.kickoff %}{{ match.kickoff }}{% endif %}{% if match.stage %} | {{ match.stage }}{% endif %}</small>
+                                            </div>
+                                            <div class="sports-score-card">
+                                                {% if match.home_score is not none and match.away_score is not none %}
+                                                    <span class="score-label">Score</span>
+                                                    {{ match.home_score }} - {{ match.away_score }}
+                                                {% else %}
+                                                    <span class="score-label">Status</span>
+                                                    Vs
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="empty-state sports-empty">No live matches right now.</div>
+                                    {% endfor %}
+                                </div>
+                            </article>
+
+                            <article class="sports-center-card sports-center-card-compact">
+                                <div class="sports-card-head">
+                                    <strong>Points Table</strong>
+                                    <span>Auto update</span>
+                                </div>
+                                <div class="sports-card-body sports-standings">
+                                    {% for table in sports_center.standings %}
+                                        <div class="sports-table-block sports-table-card">
+                                            <strong class="sports-group-title">{{ table.group }}</strong>
+                                            <div class="sports-table-wrap">
+                                                <table class="sports-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>#</th>
+                                                            <th>Team</th>
+                                                            <th>P</th>
+                                                            <th>Pts</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for row in table.rows %}
+                                                            <tr>
+                                                                <td><span class="rank-badge">{{ row.position }}</span></td>
+                                                                <td>
+                                                                    <span class="team-inline">
+                                                                        {% if row.crest %}<img src="{{ row.crest }}" alt="{{ row.team }} flag">{% else %}<span>{{ row.team[:1] }}</span>{% endif %}
+                                                                        {{ row.team }}
+                                                                    </span>
+                                                                </td>
+                                                                <td>{{ row.played }}</td>
+                                                                <td><strong class="points-badge">{{ row.points }}</strong></td>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="empty-state sports-empty">Standings will appear here once the API returns data.</div>
+                                    {% endfor %}
+                                </div>
+                            </article>
+
+                            <article class="sports-center-card sports-center-card-compact">
+                                <div class="sports-card-head">
+                                    <strong>Fixtures</strong>
+                                    <span>Next matches</span>
+                                </div>
+                                <div class="sports-card-body">
+                                    {% for match in sports_center.fixtures %}
+                                        <div class="sports-match-row sports-fixture-row">
+                                            <div class="match-teams">
+                                                <span class="team-pill">
+                                                    {% if match.home_crest %}<img src="{{ match.home_crest }}" alt="{{ match.home }} flag">{% else %}<span>{{ match.home[:1] }}</span>{% endif %}
+                                                    {{ match.home }}
+                                                </span>
+                                                <span class="match-vs">vs</span>
+                                                <span class="team-pill">
+                                                    {% if match.away_crest %}<img src="{{ match.away_crest }}" alt="{{ match.away }} flag">{% else %}<span>{{ match.away[:1] }}</span>{% endif %}
+                                                    {{ match.away }}
+                                                </span>
+                                                <small>{% if match.kickoff %}{{ match.kickoff }}{% endif %}{% if match.stage %} | {{ match.stage }}{% endif %}</small>
+                                            </div>
+                                            <div class="sports-score-card sports-score-soon">Soon</div>
+                                        </div>
+                                    {% else %}
+                                        <div class="empty-state sports-empty">Upcoming fixtures will show here.</div>
+                                    {% endfor %}
+                                </div>
+                            </article>
+                        </div>
+                    {% else %}
+                        <div class="sports-center-widget sports-center-card sports-center-card-compact">
+                            <div class="sports-card-head">
+                                <strong>{{ sports_center.cricket_widget_title }}</strong>
+                                <span>{{ sports_center.widget|upper }}</span>
+                            </div>
+                            <div class="sports-widget-body">
+                                <script async src="{{ sports_center.widget_script }}"></script>
+                                <div class="sports-widget-note">
+                                    Live cricket scores load automatically from CricketData's free widget.
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
 <main>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}

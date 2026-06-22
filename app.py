@@ -1,11 +1,13 @@
 from datetime import datetime, timezone
 from functools import wraps
 from pathlib import Path
+import json
 import os
 import time
 from html import unescape
 from html.parser import HTMLParser
-from urllib.parse import parse_qs, quote, urlparse
+from urllib.error import HTTPError, URLError
+from urllib.parse import parse_qs, quote, urlencode, urlparse
 from urllib.request import Request, urlopen
 import xml.etree.ElementTree as ET
 
@@ -26,6 +28,7 @@ from config import (
     SOCIAL_FACEBOOK,
     SOCIAL_WHATSAPP,
     SOCIAL_YOUTUBE,
+    FOOTBALL_DATA_API_TOKEN,
     UPLOAD_FOLDER,
 )
 from utils.db import db
@@ -80,6 +83,26 @@ JOB_KEYWORDS = (
     "apply",
     "panchayat",
 )
+
+SPORTS_CENTER_DEFAULT = {
+    "title": "Sports Center",
+    "active_sport": "football",
+    "football_competition_code": "WC",
+    "football_competition_name": "FIFA World Cup 2026",
+    "football_season": "2026",
+    "cricket_widget": "matchlist",
+    "cricket_widget_title": "Cricket Center",
+}
+SPORTS_CENTER_CACHE_TTL = 600
+FOOTBALL_DATA_BASE_URL = "https://api.football-data.org/v4"
+SPORTS_COMPETITION_PRESETS = [
+    {"code": "WC", "label": "FIFA World Cup"},
+    {"code": "CL", "label": "UEFA Champions League"},
+    {"code": "BL1", "label": "Bundesliga"},
+    {"code": "PD", "label": "La Liga"},
+    {"code": "SA", "label": "Serie A"},
+    {"code": "PL", "label": "Premier League"},
+]
 
 
 class AnchorParser(HTMLParser):
@@ -498,6 +521,243 @@ def get_social_links():
     return links
 
 
+def default_sports_center():
+    return SPORTS_CENTER_DEFAULT.copy()
+
+
+def get_sports_center_settings():
+    settings = default_sports_center()
+    try:
+        saved = db.settings.find_one({"key": "sports_center"}) or {}
+        settings.update(saved.get("data", {}))
+    except PyMongoError:
+        pass
+
+    settings["active_sport"] = settings.get("active_sport") if settings.get("active_sport") in {"football", "cricket"} else "football"
+    settings["football_competition_code"] = (settings.get("football_competition_code") or "WC").strip().upper()
+    settings["football_competition_name"] = (settings.get("football_competition_name") or "FIFA World Cup 2026").strip()
+    settings["football_season"] = str(settings.get("football_season") or "2026").strip()
+    settings["cricket_widget"] = settings.get("cricket_widget") if settings.get("cricket_widget") in {"matchlist", "vmatchlist", "score"} else "matchlist"
+    settings["cricket_widget_title"] = (settings.get("cricket_widget_title") or "Cricket Center").strip()
+    return settings
+
+
+def fetch_json(url, headers=None, timeout=10):
+    request = Request(url, headers=headers or {"User-Agent": "Mozilla/5.0"})
+    with urlopen(request, timeout=timeout) as response:
+        payload = response.read().decode("utf-8", errors="ignore")
+    return json.loads(payload)
+
+
+def parse_football_datetime(value):
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed
+    except ValueError:
+        return None
+
+
+def format_football_datetime(value):
+    parsed = parse_football_datetime(value)
+    if not parsed:
+        return ""
+    return parsed.astimezone().strftime("%d %b %H:%M")
+
+
+def football_data_request(path, params=None):
+    if not FOOTBALL_DATA_API_TOKEN:
+        return None
+
+    query_string = f"?{urlencode(params)}" if params else ""
+    url = f"{FOOTBALL_DATA_BASE_URL}{path}{query_string}"
+    headers = {
+        "X-Auth-Token": FOOTBALL_DATA_API_TOKEN,
+        "User-Agent": "Mozilla/5.0",
+    }
+    try:
+        return fetch_json(url, headers=headers, timeout=10)
+    except (HTTPError, URLError, TimeoutError, ValueError, json.JSONDecodeError):
+        return None
+
+
+def fetch_football_center_payload(settings):
+    competition_code = settings.get("football_competition_code", "WC")
+    season = settings.get("football_season", "2026")
+    standings_endpoint = f"{FOOTBALL_DATA_BASE_URL}/competitions/{competition_code}/standings?{urlencode({'season': season})}"
+
+    standings_payload = football_data_request(
+        f"/competitions/{competition_code}/standings",
+        {"season": season},
+    ) or {}
+    live_payload = football_data_request(
+        f"/competitions/{competition_code}/matches",
+        {"status": "LIVE", "season": season},
+    ) or {}
+    fixtures_payload = football_data_request(
+        f"/competitions/{competition_code}/matches",
+        {"status": "SCHEDULED", "season": season, "limit": 8},
+    ) or {}
+
+    standings_groups = []
+    total_teams = 0
+    for table_group in standings_payload.get("standings", []):
+        rows = []
+        for row in table_group.get("table", []):
+            team = row.get("team", {}) or {}
+            rows.append({
+                "position": row.get("position"),
+                "team": team.get("shortName") or team.get("name") or "",
+                "crest": team.get("crest") or "",
+                "played": row.get("playedGames"),
+                "won": row.get("won"),
+                "draw": row.get("draw"),
+                "lost": row.get("lost"),
+                "goals_for": row.get("goalsFor"),
+                "goals_against": row.get("goalsAgainst"),
+                "goal_difference": row.get("goalDifference"),
+                "points": row.get("points"),
+            })
+        total_teams += len(rows)
+        standings_groups.append({
+            "group": table_group.get("group") or table_group.get("stage") or "Standings",
+            "rows": rows,
+        })
+
+    app.logger.debug(
+        "Football standings fetch: endpoint=%s groups=%s teams=%s",
+        standings_endpoint,
+        len(standings_groups),
+        total_teams,
+    )
+
+    live_matches = []
+    for match in live_payload.get("matches", [])[:6]:
+        home_team = match.get("homeTeam", {}) or {}
+        away_team = match.get("awayTeam", {}) or {}
+        score = match.get("score", {}) or {}
+        full_time = score.get("fullTime", {}) or {}
+        live_matches.append({
+            "home": home_team.get("shortName") or home_team.get("name") or "",
+            "away": away_team.get("shortName") or away_team.get("name") or "",
+            "home_crest": home_team.get("crest") or "",
+            "away_crest": away_team.get("crest") or "",
+            "home_score": full_time.get("home"),
+            "away_score": full_time.get("away"),
+            "status": match.get("status", ""),
+            "kickoff": format_football_datetime(match.get("utcDate", "")),
+            "stage": match.get("stage") or "",
+            "matchday": match.get("matchday"),
+        })
+
+    fixtures = []
+    for match in fixtures_payload.get("matches", [])[:8]:
+        home_team = match.get("homeTeam", {}) or {}
+        away_team = match.get("awayTeam", {}) or {}
+        fixtures.append({
+            "home": home_team.get("shortName") or home_team.get("name") or "",
+            "away": away_team.get("shortName") or away_team.get("name") or "",
+            "home_crest": home_team.get("crest") or "",
+            "away_crest": away_team.get("crest") or "",
+            "kickoff": format_football_datetime(match.get("utcDate", "")),
+            "stage": match.get("stage") or "",
+            "matchday": match.get("matchday"),
+        })
+
+    return {
+        "sport": "football",
+        "title": settings.get("title", "Sports Center"),
+        "active_sport": "football",
+        "competition_code": competition_code,
+        "competition_name": settings.get("football_competition_name", "Football Competition"),
+        "season": season,
+        "live_matches": live_matches,
+        "fixtures": fixtures,
+        "standings": standings_groups,
+        "live_now": any(match.get("status") in {"LIVE", "IN_PLAY", "PAUSED"} for match in live_matches),
+        "source": "Football-Data.org",
+        "updated_at": datetime.now(timezone.utc),
+    }
+
+
+def fetch_cricket_center_payload(settings):
+    widget = settings.get("cricket_widget", "matchlist")
+    widget_scripts = {
+        "score": "https://cdorgapi.b-cdn.net/widgets/score.js",
+        "vmatchlist": "https://cdorgapi.b-cdn.net/widgets/vmatchlist.js",
+        "matchlist": "https://cdorgapi.b-cdn.net/widgets/matchlist.js",
+    }
+    return {
+        "sport": "cricket",
+        "title": settings.get("cricket_widget_title", "Cricket Center"),
+        "active_sport": "cricket",
+        "widget": widget,
+        "widget_script": widget_scripts.get(widget, widget_scripts["matchlist"]),
+        "live_now": True,
+        "source": "CricketData.org",
+        "updated_at": datetime.now(timezone.utc),
+    }
+
+
+def refresh_sports_center_cache(settings=None):
+    settings = settings or get_sports_center_settings()
+    if settings.get("active_sport") == "cricket":
+        payload = fetch_cricket_center_payload(settings)
+    else:
+        payload = fetch_football_center_payload(settings)
+
+    try:
+        db.settings.update_one(
+            {"key": "sports_center_cache"},
+            {"$set": {"key": "sports_center_cache", "data": payload, "updated_at": datetime.now(timezone.utc)}},
+            upsert=True,
+        )
+    except PyMongoError:
+        pass
+    return payload
+
+
+def get_sports_center():
+    settings = get_sports_center_settings()
+    try:
+        cached = db.settings.find_one({"key": "sports_center_cache"}) or {}
+        updated_at = as_utc_datetime(cached.get("updated_at"))
+        cached_data = cached.get("data", {})
+    except PyMongoError:
+        cached = {}
+        updated_at = None
+        cached_data = {}
+
+    if isinstance(updated_at, datetime):
+        age = (datetime.now(timezone.utc) - updated_at).total_seconds()
+        if age < SPORTS_CENTER_CACHE_TTL and cached_data:
+            return cached_data
+
+    refreshed = refresh_sports_center_cache(settings)
+    if refreshed:
+        return refreshed
+
+    return cached_data or (
+        fetch_cricket_center_payload(settings) if settings.get("active_sport") == "cricket" else {
+            "sport": "football",
+            "title": settings.get("title", "Sports Center"),
+            "active_sport": "football",
+            "competition_code": settings.get("football_competition_code", "WC"),
+            "competition_name": settings.get("football_competition_name", "FIFA World Cup 2026"),
+            "season": settings.get("football_season", "2026"),
+            "live_matches": [],
+            "fixtures": [],
+            "standings": [],
+            "live_now": False,
+            "source": "Football-Data.org",
+            "updated_at": datetime.now(timezone.utc),
+        }
+    )
+
+
 def parse_feed_date(value):
     if not value:
         return ""
@@ -769,6 +1029,7 @@ def home():
         activities=community_activities()[:3],
         sports_headlines=get_sports_headlines(),
         job_headlines=get_job_headlines(),
+        sports_center=get_sports_center(),
         live_stream=get_live_stream(),
         featured_video=get_featured_video(),
         donation=get_donation_details(),
@@ -943,6 +1204,8 @@ def admin():
         programs=programs,
         sections=sections,
         member_sections=member_sections(),
+        sports_center_settings=get_sports_center_settings(),
+        sports_competitions=SPORTS_COMPETITION_PRESETS,
         live_stream=get_live_stream(),
         featured_video=get_featured_video(),
         social_links=get_social_links(),
@@ -1110,6 +1373,41 @@ def update_social_links():
         flash("Social media links updated successfully.", "success")
     except PyMongoError:
         flash("Could not update social links. Check MongoDB connection.", "danger")
+
+    return redirect(url_for("admin"))
+
+
+@app.route("/admin/sports-center", methods=["POST"])
+@login_required
+def update_sports_center():
+    active_sport = request.form.get("active_sport", "football").strip().lower()
+    if active_sport not in {"football", "cricket"}:
+        active_sport = "football"
+
+    competition_code = request.form.get("football_competition_code", "").strip().upper() or "WC"
+    settings = {
+        "title": request.form.get("title", "").strip() or "Sports Center",
+        "active_sport": active_sport,
+        "football_competition_code": competition_code,
+        "football_competition_name": request.form.get("football_competition_name", "").strip() or "FIFA World Cup 2026",
+        "football_season": request.form.get("football_season", "").strip() or "2026",
+        "cricket_widget": request.form.get("cricket_widget", "matchlist").strip().lower(),
+        "cricket_widget_title": request.form.get("cricket_widget_title", "").strip() or "Cricket Center",
+        "updated_at": datetime.now(timezone.utc),
+    }
+    if settings["cricket_widget"] not in {"matchlist", "vmatchlist", "score"}:
+        settings["cricket_widget"] = "matchlist"
+
+    try:
+        db.settings.update_one(
+            {"key": "sports_center"},
+            {"$set": {"key": "sports_center", "data": settings, "updated_at": datetime.now(timezone.utc)}},
+            upsert=True,
+        )
+        refresh_sports_center_cache(settings)
+        flash("Sports center settings updated successfully.", "success")
+    except PyMongoError:
+        flash("Could not update sports center settings. Check MongoDB connection.", "danger")
 
     return redirect(url_for("admin"))
 

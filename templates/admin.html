@@ -160,6 +160,56 @@
 
     <div class="admin-section">
         <div class="section-heading">
+            <span class="eyebrow">Sports Center</span>
+            <h2>Live Sports Widget</h2>
+        </div>
+        <form action="{{ url_for('update_sports_center') }}" method="post" class="form-panel admin-form-grid">
+            <div>
+                <label class="form-label" for="sports-title">Section title</label>
+                <input id="sports-title" name="title" class="form-control" value="{{ sports_center_settings.title }}" placeholder="Sports Center">
+            </div>
+            <div>
+                <label class="form-label" for="active-sport">Active sport</label>
+                <select id="active-sport" name="active_sport" class="form-control">
+                    <option value="football" {% if sports_center_settings.active_sport == 'football' %}selected{% endif %}>Football</option>
+                    <option value="cricket" {% if sports_center_settings.active_sport == 'cricket' %}selected{% endif %}>Cricket</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label" for="football-name">Football tournament name</label>
+                <input id="football-name" name="football_competition_name" class="form-control" value="{{ sports_center_settings.football_competition_name }}" placeholder="FIFA World Cup 2026">
+            </div>
+            <div>
+                <label class="form-label" for="football-code">Football competition code</label>
+                <select id="football-code" name="football_competition_code" class="form-control">
+                    {% for item in sports_competitions %}
+                        <option value="{{ item.code }}" {% if sports_center_settings.football_competition_code == item.code %}selected{% endif %}>{{ item.label }} ({{ item.code }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="form-label" for="football-season">Football season</label>
+                <input id="football-season" name="football_season" class="form-control" value="{{ sports_center_settings.football_season }}" placeholder="2026">
+            </div>
+            <div>
+                <label class="form-label" for="cricket-widget-title">Cricket widget title</label>
+                <input id="cricket-widget-title" name="cricket_widget_title" class="form-control" value="{{ sports_center_settings.cricket_widget_title }}" placeholder="Cricket Center">
+            </div>
+            <div>
+                <label class="form-label" for="cricket-widget">Cricket widget style</label>
+                <select id="cricket-widget" name="cricket_widget" class="form-control">
+                    <option value="matchlist" {% if sports_center_settings.cricket_widget == 'matchlist' %}selected{% endif %}>Match list</option>
+                    <option value="vmatchlist" {% if sports_center_settings.cricket_widget == 'vmatchlist' %}selected{% endif %}>Vertical match list</option>
+                    <option value="score" {% if sports_center_settings.cricket_widget == 'score' %}selected{% endif %}>Live score</option>
+                </select>
+            </div>
+            <small class="text-muted">Football data uses the Football-Data.org API token from your environment. Cricket uses the free CricketData widget.</small>
+            <button class="btn btn-dark">Save Sports Center</button>
+        </form>
+    </div>
+
+    <div class="admin-section">
+        <div class="section-heading">
             <span class="eyebrow">Live stream</span>
             <h2>YouTube Live Embed</h2>
         </div>

@@ -34,3 +34,6 @@ CLOUDINARY_URL = os.getenv("CLOUDINARY_URL", "")
 SOCIAL_WHATSAPP = os.getenv("SOCIAL_WHATSAPP", "")
 SOCIAL_FACEBOOK = os.getenv("SOCIAL_FACEBOOK", "")
 SOCIAL_YOUTUBE = os.getenv("SOCIAL_YOUTUBE", "")
+
+# Optional football API token for the Sports Center module.
+FOOTBALL_DATA_API_TOKEN = os.getenv("FOOTBALL_DATA_API_TOKEN", "")
